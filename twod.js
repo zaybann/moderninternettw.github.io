@@ -1,27 +1,16 @@
-<?php 
-    include('simple_html_dom.php');
-    $inputUrl = "https://www.set.or.th/th/home";
-    $html = file_get_html($inputUrl);
-    $i = 0;
-    $numArr = array();
-    foreach($html->find('td') as $e){
-        $i++;
-        if($i > 8 ) break;
-        $numArr[] = $e->innertext;
-    }
-    $result = array();
+const request = require('request');
 
-    $first = str_split($numArr[1]);
-    $second = str_split($numArr[7]);
-    $firstNum = $first[count($first)-1];
-    $pointPos = strpos($numArr[7],'.');
-    $secondNum = $second[$pointPos-1];
+const options = {
+  method: 'GET',
+  url: 'https://myanmar-all-in-one-2d-results.p.rapidapi.com/api/v1/live',
+  headers: {
+    'X-RapidAPI-Key': 'eb32ae04f6mshc0184d8acb0899cp18bfc6jsnef066a8a98b3',
+    'X-RapidAPI-Host': 'myanmar-all-in-one-2d-results.p.rapidapi.com'
+  }
+};
 
-    
-    $result["SET"] = $numArr[1];
-    $result["VAL"] = $numArr[7];
-    $result["NUM"] = $firstNum.$secondNum;
+request(options, function (error, response, body) {
+	if (error) throw new Error(error);
 
-    // update the number per minutes 
-    echo json_encode($result);
-?>
+	console.log(body);
+});

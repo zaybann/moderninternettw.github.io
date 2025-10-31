@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllMovieMM Style - ဗီဒီယိုများ</title>
+    
+    <style>
+        /* Base Styles: Dark Theme */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a; /* Dark background */
+            color: #ecf0f1; /* Light text color */
+        }
+
+        /* Top Bar Styling */
+        .topbar {
+            background-color: #0d0d0d; 
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-img {
+            height: 35px; 
+            margin-right: 15px;
+            cursor: pointer; 
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 1.6em;
+            color: #3498db; 
+            font-weight: bold;
+        }
+
+        /* Content Area & Layout Container */
+        .content-container {
+            padding: 20px 30px;
+            max-width: 1200px; 
+            margin: 20px auto;
+        }
+
+        .content-container h2 {
+            color: #ecf0f1; 
+            margin-bottom: 25px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        /* === အဓိက ပြင်ဆင်ချက်: ၄ ခု တစ်တန်း Grid (ပုံမှာ ပြထားသည့်အတိုင်း) === */
+        .data-grid {
+            display: grid;
+            /* မျက်နှာပြင် အကျယ်ပေါ်မူတည်ပြီး 200px မှ 4 ခုအထိ ပြသရန် */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px;
+        }
+        
+        /* Video Card Styling */
+        .data-card {
+            background-color: #2c3e50; 
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .data-card:hover {
+            transform: scale(1.03); 
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.5); 
+        }
+
+        /* === အဓိက ပြင်ဆင်ချက်: ပုံ Size အားလုံး တူညီစေရန် === */
+        .card-image {
+            width: 100%;
+            height: 150px; /* ပုံ၏ အမြင့်ကို သတ်မှတ်ထားသည် */
+            object-fit: cover; /* ပုံသည် နေရာအပြည့် ဖြည့်စေပြီး မူရင်း Aspect Ratio ကို ထိန်းထားသည် */
+            display: block;
+        }
+
+        .card-body {
+            padding: 10px;
+            min-height: 50px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-body h3 {
+            margin: 0;
+            font-size: 1em;
+            color: #ecf0f1;
+            /* စာသား နှစ်ကြောင်းထိ ပြနိုင်ရန် */
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical;
+        }
+        
+        /* Player & Loading Styles */
+        .video-player-page { 
+            display: none; 
+            padding: 20px; 
+            max-width: 900px; 
+            margin: 20px auto; 
+            background-color: #2c3e50; 
+            border-radius: 8px;
+        }
+        .loading-message { 
+            text-align: center; 
+            padding: 50px; 
+            font-size: 1.2em; 
+            color: #95a5a6; 
+        }
+        .back-button { 
+            background-color: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin-bottom: 20px;
+        }
+        .video-element { 
+            width: 100%; 
+            min-height: 450px; 
+            background-color: black; 
+            border-radius: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="user-panel-view">
+        <header class="topbar">
+            <img src="logo.png" alt="Company Logo" class="logo-img" onclick="showPanel('user-panel-view')">
+            <h2>MOVIE CLUB</h2>
+        </header>
+
+        <div class="content-container">
+            <h2>🎬 Most Recent Videos</h2>
+            
+            <div id="loading-status" class="loading-message">
+                ⏳ ဗီဒီယို အချက်အလက်များ ရယူနေပါသည်...
+            </div>
+
+            <div class="data-grid" id="video-list">
+                </div>
+        </div>
+    </div>
+    
+    <div id="video-player-view" class="video-player-page">
+        <button class="back-button" onclick="showPanel('user-panel-view')">
+            &#8592; နောက်သို့ ပြန်သွားရန်
+        </button>
+        
+        <h1 id="video-title">ဗီဒီယို ခေါင်းစဉ်</h1>
+        
+        <video 
+            id="video-player" 
+            class="video-element" 
+            controls 
+            preload="metadata"
+        >
+            သင့်ဘရောက်ဆာသည် HTML ဗီဒီယိုကို မပံ့ပိုးပါ။
+        </video>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // === (၁) Firebase Configuration (Admin.html မှ ကူးယူထားသည်) ===
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyP_A1A1vk",
+            authDomain: "twod-aa6c1.firebaseapp.com",
+            projectId: "twod-aa6c1",
+            storageBucket: "twod-aa6c1.appspot.com",
+            messagingSenderId: "674076613631",
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const postsRef = database.ref('posts'); // Admin တင်ထားသော Data Path
+
+        // === (၂) DOM Element များကို ရယူခြင်း ===
+        const videoListDiv = document.getElementById('video-list');
+        const userPanelView = document.getElementById('user-panel-view');
+        const videoPlayerView = document.getElementById('video-player-view');
+        const videoPlayerElement = document.getElementById('video-player');
+        const videoTitleElement = document.getElementById('video-title');
+        const loadingStatus = document.getElementById('loading-status');
+        
+        let videosData = []; 
+
+        // 1. User Panel တွင် ဗီဒီယို Card များ ဖန်တီးပြသခြင်း
+        function renderVideoCards() {
+            videoListDiv.innerHTML = ''; 
+            
+            if (videosData.length === 0) {
+                loadingStatus.textContent = '⛔ Admin မှ တင်ထားသော ဗီဒီယိုများ မရှိသေးပါ။';
+                loadingStatus.style.display = 'block';
+                return;
+            }
+
+            loadingStatus.style.display = 'none'; 
+
+            videosData.forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'data-card';
+                
+                // ပုံကို နှိပ်လိုက်ပါက showVideoPlayer function ကို ခေါ်ဆိုမည်
+                card.onclick = () => showVideoPlayer(video.text, video.videoLink);
+                
+                card.innerHTML = `
+                    <img src="${video.imageLink}" alt="${video.text} Poster" class="card-image">
+                    <div class="card-body">
+                        <h3>${video.text}</h3>
+                    </div>
+                `;
+                videoListDiv.appendChild(card);
+            });
+        }
+        
+        // 2. စာမျက်နှာ ကူးပြောင်းခြင်း function (Panel View <-> Video Player View)
+        function showPanel(panelId) {
+            if (panelId === 'user-panel-view') {
+                userPanelView.style.display = 'block';
+                videoPlayerView.style.display = 'none';
+                videoPlayerElement.pause(); 
+                videoPlayerElement.removeAttribute('src'); // src ကို ရှင်းထုတ်လိုက်သည်
+            } else if (panelId === 'video-player-view') {
+                userPanelView.style.display = 'none';
+                videoPlayerView.style.display = 'block';
+            }
+        }
+
+        // 3. ဗီဒီယို ဖွင့်ခြင်း function
+        function showVideoPlayer(title, url) {
+            videoTitleElement.textContent = title;
+            videoPlayerElement.src = url;
+            
+            showPanel('video-player-view'); 
+            
+            videoPlayerElement.play().catch(error => {
+                console.log("Autoplay failed:", error);
+            });
+        }
+
+        // === (၄) Firebase Database မှ Data များကို ရယူခြင်းနှင့် စီစဉ်ခြင်း ===
+        postsRef.on('value', (snapshot) => {
+            videosData = []; 
+            if (snapshot.exists()) {
+                
+                snapshot.forEach((childSnapshot) => {
+                    // Firebase ကနေ ရလာတဲ့ Data ကို videosData ထဲ ထည့်သည်
+                    videosData.push(childSnapshot.val());
+                });
+                
+                // Data အသစ်ကို အပေါ်ဆုံးတွင် ပြသရန် timestamp ဖြင့် စီစဉ်သည်
+                // b.timestamp - a.timestamp သည် အသစ်ဆုံးကို အပေါ်ဆုံးပို့ရန် (Descending Order)
+                videosData.sort((a, b) => b.timestamp - a.timestamp); 
+            }
+            
+            renderVideoCards();
+        }, (error) => {
+            console.error("Firebase Database မှ Data ရယူရာတွင် အမှားဖြစ်သည်:", error);
+            loadingStatus.textContent = `❌ Data ရယူရာတွင် အမှားဖြစ်သည်: ${error.message}`;
+            loadingStatus.style.display = 'block';
+        });
+
+        showPanel('user-panel-view');
+        
+    </script>
+
+</body>
+</html>

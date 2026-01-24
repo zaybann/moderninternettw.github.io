@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMK Games</title>
+    <title>MMK GAME</title>
     <style>
         :root {
             --primary-yellow: #FFD700;
@@ -107,7 +107,7 @@
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
 
-        /* Adsterra Bottom Container CSS */
+        /* Adsterra Bottom Container - Update အသစ် */
         .ad-bottom-fixed {
             position: fixed;
             bottom: 0;
@@ -118,8 +118,9 @@
             justify-content: center;
             align-items: center;
             padding: 5px 0;
-            z-index: 999;
+            z-index: 10000; /* Menu များထက် အပေါ်ရောက်ရန် */
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            min-height: 55px;
         }
     </style>
 </head>
@@ -133,12 +134,12 @@
 <div id="toast">ID ကို ကူးယူပြီးပါပြီ</div>
 
 <div class="top-nav">
-    <div class="logo">⭐ MMK GAMES ⭐</div>
+    <div class="logo">MMK GAME</div>
 </div>
 
 <div class="container">
     <div class="profile-card">
-        <img src="https://via.placeholder.com/65" class="profile-img.png" alt="User">
+        <img src="https://via.placeholder.com/65" class="profile-img" alt="User">
         <div class="user-info">
             <h3 id="uName">Loading...</h3>
             <div class="user-id-badge" onclick="copyUserID()">
@@ -161,7 +162,7 @@
 
     <div class="promo-bar">
         <span style="margin-right: 10px;">📢</span> 
-        MMK GAMES Channel ကို Join ထားပါ။
+        Promotion အစီအစဉ်သိဖို့ Channel ကို Join ထားပါ။
     </div>
 
     <div class="game-grid">
@@ -197,17 +198,17 @@
     </div>
 </div>
 
-<div class="ad-bottom-fixed" style="position:fixed; bottom:0; left:0; width:100%; display:flex; justify-content:center; background:white; z-index:999; padding: 5px 0;">
+<div class="ad-bottom-fixed">
     <script type="text/javascript">
-        atOptions = {
-            'key' : 'a1981af0fd9b8e157a65f62b2a08ee9e',
-            'format' : 'iframe',
-            'height' : 50,
-            'width' : 320,
-            'params' : {}
-        };
+      atOptions = {
+        'key' : '06fac417bd92ea8b70f3d54705bac232',
+        'format' : 'iframe',
+        'height' : 50,
+        'width' : 320,
+        'params' : {}
+      };
     </script>
-    <script type="text/javascript" src="https://www.highperformanceformat.com/a1981af0fd9b8e157a65f62b2a08ee9e/invoke.js"></script>
+    <script type="text/javascript" src="https://www.highperformanceformat.com/06fac417bd92ea8b70f3d54705bac232/invoke.js"></script>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

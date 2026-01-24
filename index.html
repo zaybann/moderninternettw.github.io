@@ -3,56 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading - My Website</title>
+    <title>One Star Dashboard</title>
     <style>
-        body { margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
-        .loader-wrapper { text-align: center; }
-        .spinner {
-            border: 5px solid #ddd;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            width: 50px; height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        :root {
+            --primary-yellow: #FFD700;
+            --accent-red: #FF5252;
+            --bg-light: #fdfdfd;
+        }
+
+        body { 
+            font-family: 'Pyidaungsu', sans-serif; background: var(--bg-light); 
+            margin: 0; padding: 0; color: #333; 
+        }
+
+        /* --- Loading Screen --- */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 9999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-yellow);
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #status { color: #555; font-size: 14px; }
+
+        /* --- Top Navigation --- */
+        .top-nav {
+            background: var(--primary-yellow);
+            padding: 15px;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .logo { font-weight: bold; font-size: 22px; color: #d35400; text-align: center; }
+
+        .container { padding: 15px; padding-bottom: 20px; }
+
+        /* User Profile Card */
+        .profile-card {
+            background: var(--accent-red);
+            border-radius: 12px; padding: 18px;
+            display: flex; align-items: center; color: white;
+            position: relative; margin-bottom: 15px;
+            min-height: 80px;
+        }
+        .profile-img {
+            width: 65px; height: 65px; border-radius: 10px;
+            background: #fff; margin-right: 15px; object-fit: cover;
+        }
+        .user-info h3 { margin: 0; font-size: 19px; }
+        
+        .user-id-badge {
+            margin: 6px 0; font-size: 13px; background: rgba(0,0,0,0.15); 
+            padding: 4px 10px; border-radius: 6px; display: inline-block;
+            cursor: pointer; transition: 0.2s; border: 1px dashed rgba(255,255,255,0.4);
+        }
+
+        .user-info p { margin: 2px 0 0; font-size: 13px; opacity: 0.95; }
+
+        /* Wallet Boxes */
+        .wallet-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+        }
+        .wallet-box {
+            background: var(--accent-red); color: white; border-radius: 12px; padding: 15px;
+            min-height: 80px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .wallet-box p { margin: 0; font-size: 13px; opacity: 0.9; text-decoration: underline; }
+        .wallet-box h2 { margin: 8px 0 0; font-size: 19px; font-weight: bold; }
+
+        /* Promo Bar */
+        .promo-bar {
+            background: #FFCDD2; padding: 12px; border-radius: 10px;
+            margin: 15px 0; font-size: 14px; display: flex; align-items: center;
+            border: 1px solid #ef9a9a;
+        }
+
+        /* Game Menu Grid */
+        .game-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;
+        }
+        .game-item { 
+            background: white; border-radius: 15px; padding: 15px 10px; 
+            text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; transition: 0.2s;
+            border: 1px solid #eee;
+        }
+        .game-item:active { transform: scale(0.95); background: #f9f9f9; }
+        .circle-icon {
+            width: 55px; height: 55px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 22px; margin-bottom: 8px;
+        }
+
+        /* Toast Message */
+        #toast {
+            visibility: hidden; min-width: 200px; background-color: #333; color: #fff;
+            text-align: center; border-radius: 10px; padding: 10px; position: fixed;
+            z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%);
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+        /* Login Button Style */
+        .login-btn-card {
+            background: white; color: var(--accent-red);
+            padding: 8px 15px; border-radius: 8px;
+            font-weight: bold; text-decoration: none;
+            display: inline-block; margin-top: 5px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="loader-wrapper">
-        <div class="spinner"></div>
-        <p id="status">Connecting to Database...</p>
+<div id="loading-screen">
+    <div class="loader"></div>
+    <p style="margin-top:10px;">ခဏစောင့်ပေးပါ...</p>
+</div>
+
+<div id="toast">ID ကို ကူးယူပြီးပါပြီ</div>
+
+<div class="top-nav">
+    <div class="logo">⭐ One Star</div>
+</div>
+
+<div class="container">
+    <div class="profile-card" id="profileCardArea">
+        <img src="https://via.placeholder.com/65" class="profile-img" alt="User">
+        <div class="user-info" id="userInfoContent">
+            <h3>Loading...</h3>
+        </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <div class="wallet-row">
+        <div class="wallet-box">
+            <p>🏦 လက်ကျန်ငွေ</p>
+            <h2><span id="uBalance">0</span> ကျပ်</h2>
+        </div>
+        <div class="wallet-box" onclick="location.href='withdraw.html'" style="cursor: pointer;">
+            <p>💰 ငွေထုတ်ယူရန်</p>
+            <h2>ငွေထုတ်</h2>
+        </div>
+    </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
-            authDomain: "twod-aa6c1.firebaseapp.com",
-            projectId: "twod-aa6c1",
-            storageBucket: "twod-aa6c1.appspot.com",
-            messagingSenderId: "674076613631",
-            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
-        };
+    <div class="promo-bar">
+        <span style="margin-right: 10px;">📢</span> 
+        Promotion အစီအစဉ်သိဖို့ Channel ကို Join ထားပါ။
+    </div>
 
-        firebase.initializeApp(firebaseConfig);
+    <div class="game-grid">
+        <div class="game-item" onclick="location.href='luckycard.html'">
+            <div class="circle-icon" style="background: #e8f5e9; color: #2e7d32;">🃏</div>
+            <div style="font-size: 13px; font-weight: bold;">Lucky Card</div>
+        </div>
 
-        const statusText = document.getElementById('status');
+        <div class="game-item" onclick="location.href='luckyspin.html'">
+            <div class="circle-icon" style="background: #fff8e1; color: #fbc02d; border: 2px solid #fbc02d;">🎡</div>
+            <div style="font-size: 13px; font-weight: bold;">Lucky Spin</div>
+        </div>
 
-        // Login Status ကို စစ်ဆေးခြင်း
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                statusText.innerText = "Redirecting to Home...";
-                setTimeout(() => { window.location.href = "home.html"; }, 1000);
-            } else {
-                statusText.innerText = "Redirecting to Login...";
-                setTimeout(() => { window.location.href = "loginsignup.html"; }, 1000);
-            }
+        <div class="game-item" onclick="location.href='luckyslot.html'">
+            <div class="circle-icon" style="background: #000; color: #fff;">🎰</div>
+            <div style="font-size: 13px; font-weight: bold;">Lucky Slot</div>
+        </div>
+
+        <div class="game-item" onclick="location.href='pointhistory.html'">
+            <div class="circle-icon" style="background: #f3e5f5; color: #8e24aa;">📜</div>
+            <div style="font-size: 13px; font-weight: bold;">မှတ်တမ်း</div>
+        </div>
+
+        <div class="game-item" onclick="location.href='invite.html'">
+            <div class="circle-icon" style="background: #e3f2fd; color: #1565c0;">👥</div>
+            <div style="font-size: 13px; font-weight: bold;">မိတ်ဆက်</div>
+        </div>
+
+        <div class="game-item" onclick="location.href='withdrawhistory.html'">
+            <div class="circle-icon" style="background: #ffebee; color: #c62828;">💸</div>
+            <div style="font-size: 13px; font-weight: bold;">ငွေထုတ်မှတ်တမ်း</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let rawID = ""; 
+
+    auth.onAuthStateChanged(user => {
+        const userInfoBox = document.getElementById('userInfoContent');
+        const profileCard = document.getElementById('profileCardArea');
+
+        if (user) {
+            db.collection("users").doc(user.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    rawID = data.userId || ""; 
+                    userInfoBox.innerHTML = `
+                        <h3>${data.name || "User"}</h3>
+                        <div class="user-id-badge" onclick="copyUserID()">
+                            <span id="uUserId">ID: ${rawID}</span> 📋
+                        </div>
+                        <p id="uPhone">${data.phone || "No Phone"}</p>
+                    `;
+                    document.getElementById('uBalance').innerText = (data.balance || 0).toLocaleString();
+                    document.getElementById('loading-screen').style.display = 'none';
+                    profileCard.onclick = null;
+                    profileCard.style.cursor = "default";
+                }
+            });
+        } else {
+            userInfoBox.innerHTML = `
+                <h3>အကောင့်ဝင်မထားပါ</h3>
+                <a href="loginsignup.html" class="login-btn-card">အကောင့်ဝင်ရန် နှိပ်ပါ</a>
+            `;
+            document.getElementById('uBalance').innerText = "0";
+            document.getElementById('loading-screen').style.display = 'none';
+            profileCard.style.cursor = "pointer";
+            profileCard.onclick = () => { window.location.href = "loginsignup.html"; };
+        }
+    });
+
+    function copyUserID() {
+        if (!rawID) return;
+        navigator.clipboard.writeText(rawID).then(() => {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         });
-    </script>
+    }
+</script>
+
 </body>
 </html>

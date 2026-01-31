@@ -71,7 +71,7 @@
 
         if (mode === 'login') {
             auth.signInWithEmailAndPassword(email, pass)
-                .then(() => window.location.href = "home.html")
+                .then(() => window.location.href = "index.html")
                 .catch(e => { loader.style.display = 'none'; alert("အချက်အလက်မှားနေပါသည်"); });
         } else {
             const name = document.getElementById('name').value;
@@ -123,10 +123,11 @@
                 await db.collection("users").doc(res.user.uid).set(userData);
                 
                 alert("အကောင့်ဖွင့်ခြင်း အောင်မြင်ပါသည်။");
-                window.location.href = "home.html";
+                window.location.href = "index.html";
             } catch (e) { loader.style.display = 'none'; alert(e.message); }
         }
     }
 </script>
 </body>
+
 </html>

@@ -71,8 +71,6 @@
 
 <script src="https://quge5.com/88/tag.min.js" data-zone="207121" async data-cfasync="false"></script>
 
-<script>(function(s){s.dataset.zone='10545270',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
@@ -116,7 +114,7 @@
         const lastScratch = userData.lastScratchDate ? userData.lastScratchDate.toDate() : new Date(0);
         
         if (lastScratch < resetTime) {
-            chancesLeft = 5; 
+            chancesLeft = 5;
         } else {
             chancesLeft = userData.chancesLeft !== undefined ? userData.chancesLeft : 5;
         }
@@ -187,9 +185,10 @@
         document.getElementById('popAmount').innerText = amount;
         document.getElementById('winModal').style.display = 'flex';
 
-        // --- Monetag Ad Display Logic (Show ads on chances 4, 2, and 0) ---
+        // --- Monetag Ad Call Section ---
+        // အခွင့်အရေး ၄၊ ၂၊ ၀ ဖြစ်ချိန်များတွင် Multitag က အလုပ်လုပ်ပါမည်
         if (chancesLeft === 4 || chancesLeft === 2 || chancesLeft === 0) {
-            // Ads will trigger based on Monetag scripts loaded above
+            // Multitag logic
         }
 
         const now = new Date();

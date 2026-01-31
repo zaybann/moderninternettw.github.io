@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Star - Admin Panel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FFD700;
+            --secondary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Top Header */
+        .top-bar {
+            background: var(--secondary);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-bottom: 4px solid var(--primary);
+        }
+
+        .stat-icon {
+            font-size: 35px;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+
+        .stat-info h3 { margin: 0; font-size: 24px; }
+        .stat-info p { margin: 0; font-size: 14px; color: #777; }
+
+        /* Main Content area */
+        .content { padding: 0 25px 25px 25px; }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #fff;
+            padding: 18px 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .card-header i { margin-right: 10px; color: var(--accent); }
+
+        /* Table Styling */
+        .table-responsive { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            text-align: left;
+            padding: 15px;
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 15px;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .bg-pending { background: #fff4e5; color: #ff9800; }
+        
+        /* Buttons */
+        .btn {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-blue { background: var(--accent); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <div style="font-size: 20px; font-weight: bold;"><i class="fas fa-star"></i> One Star Admin</div>
+    <div id="adminName"><i class="fas fa-user-circle"></i> Administrator</div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <h3 id="totalUserCount">0</h3>
+            <p>Total Users</p>
+        </div>
+    </div>
+    <div class="stat-card" style="border-color: var(--accent);">
+        <div class="stat-icon" style="color: var(--accent);"><i class="fas fa-wallet"></i></div>
+        <div class="stat-info">
+            <h3 id="pendingWithdrawCount">0</h3>
+            <p>Withdraw Requests</p>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="card">
+        <div class="card-header"><i class="fas fa-money-bill-wave"></i> ငွေထုတ်ရန် တောင်းဆိုမှုများ</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>အမည် / ဖုန်း</th>
+                        <th>နည်းလမ်း / အကောင့်</th>
+                        <th>ပမာဏ</th>
+                        <th>လုပ်ဆောင်ချက်</th>
+                    </tr>
+                </thead>
+                <tbody id="withdrawList">
+                    <tr><td colspan="4" style="text-align:center; padding:30px; color:#999;">Loading Requests...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><i class="fas fa-user-plus"></i> Referral အတည်ပြုရန်</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>User (ID)</th>
+                        <th>ဖိတ်ခေါ်သူ ID</th>
+                        <th>Status</th>
+                        <th>လုပ်ဆောင်ချက်</th>
+                    </tr>
+                </thead>
+                <tbody id="pendingList">
+                    <tr><td colspan="4" style="text-align:center; padding:30px; color:#999;">Loading Referrals...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Stats ဖတ်ခြင်း
+    db.collection("users").onSnapshot(snap => {
+        document.getElementById('totalUserCount').innerText = snap.size;
+    });
+
+    // Withdraw Requests
+    db.collection("withdrawRequests").where("status", "==", "Pending").onSnapshot(snap => {
+        document.getElementById('pendingWithdrawCount').innerText = snap.size;
+        let html = "";
+        if(snap.empty) {
+            html = "<tr><td colspan='4' style='text-align:center; color:#999;'>တောင်းဆိုမှု မရှိပါ။</td></tr>";
+        } else {
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<tr>
+                    <td><b>${d.accName}</b><br><small>${d.phone}</small></td>
+                    <td><span class="badge bg-pending">${d.method}</span><br><small>${d.date}</small></td>
+                    <td style="color:var(--danger); font-weight:bold;">${d.amount.toLocaleString()} Ks</td>
+                    <td><button class="btn btn-blue" onclick="completeWithdraw('${doc.id}', '${d.uid}', ${d.amount})"><i class="fas fa-check-circle"></i> လွှဲပြီးပြီ</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('withdrawList').innerHTML = html;
+    });
+
+    // Referral List
+    db.collection("users").where("referralStatus", "==", "pending").onSnapshot(snap => {
+        let html = "";
+        if(snap.empty) {
+            html = "<tr><td colspan='4' style='text-align:center; color:#999;'>Referral မရှိပါ။</td></tr>";
+        } else {
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<tr>
+                    <td>${d.name}<br><small>ID: ${d.userId}</small></td>
+                    <td><b>${d.referralFrom}</b></td>
+                    <td><span class="badge bg-pending">စောင့်ဆိုင်းဆဲ</span></td>
+                    <td><button class="btn btn-green" onclick="approve('${doc.id}', '${d.referralFrom}')"><i class="fas fa-gift"></i> အတည်ပြု (၅၀၀ ပေး)</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('pendingList').innerHTML = html;
+    });
+
+    // Logic Functions (Same as before)
+    async function completeWithdraw(id, uid, amt) {
+        if(!confirm("ငွေလွှဲပြီးပြီမှာ သေချာပါသလား?")) return;
+        await db.collection("withdrawRequests").doc(id).update({ status: "Success" });
+        const hSnap = await db.collection("users").doc(uid).collection("withdrawHistory").where("status","==","Pending").where("amount","==",amt).get();
+        if(!hSnap.empty) await hSnap.docs[0].ref.update({ status: "Success" });
+        alert("အောင်မြင်ပါသည်။");
+    }
+
+    async function approve(uid, ref) {
+        if(!confirm("နှစ်ဦးစလုံးကို ၅၀၀ စီ ပေးမှာလား?")) return;
+        const rSnap = await db.collection("users").where("userId", "==", ref).get();
+        if(!rSnap.empty) await db.collection("users").doc(rSnap.docs[0].id).update({ balance: firebase.firestore.FieldValue.increment(150) });
+        await db.collection("users").doc(uid).update({ balance: firebase.firestore.FieldValue.increment(150), referralStatus: "approved" });
+        alert("အတည်ပြုပြီးပါပြီ။");
+    }
+</script>
+</body>
+</html>

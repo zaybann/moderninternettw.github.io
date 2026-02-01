@@ -69,8 +69,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-<script src="https://quge5.com/88/tag.min.js" data-zone="207121" async data-cfasync="false"></script>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
@@ -185,10 +183,9 @@
         document.getElementById('popAmount').innerText = amount;
         document.getElementById('winModal').style.display = 'flex';
 
-        // --- Monetag Ad Call Section ---
-        // အခွင့်အရေး ၄၊ ၂၊ ၀ ဖြစ်ချိန်များတွင် Multitag က အလုပ်လုပ်ပါမည်
+        // --- Ad Control Section ---
         if (chancesLeft === 4 || chancesLeft === 2 || chancesLeft === 0) {
-            // Multitag logic
+            // Multitag (Push & Popunder) will trigger automatically
         }
 
         const now = new Date();
@@ -214,5 +211,8 @@
         if (chancesLeft > 0) document.getElementById('resetBtn').style.display = 'block';
     }
 </script>
+
+<script src="https://quge5.com/88/tag.min.js" data-zone="207121" async data-cfasync="false"></script>
+
 </body>
 </html>

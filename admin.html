@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - MMK 2D</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001529; --bg-card: #002140; --accent: #1890ff; --white: #ffffff; }
+        body { background: var(--bg-dark); color: var(--white); font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .admin-container { width: 90%; max-width: 500px; display: none; } /* စစချင်း ဖျောက်ထားမည် */
+        .card { background: var(--bg-card); padding: 25px; border-radius: 20px; border: 1px solid #1d39c4; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 1px solid #1d39c4; background: #001529; color: white; outline: none; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 16px; }
+        .btn-search { background: var(--accent); color: white; }
+        .btn-add { background: #52c41a; color: white; }
+        .btn-sub { background: #f5222d; color: white; }
+        .user-info { background: #003a8c; padding: 20px; border-radius: 15px; margin-top: 20px; display: none; border-left: 5px solid var(--accent); }
+        #loading { display: none; text-align: center; margin: 10px 0; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="admin-container" id="adminPanel">
+    <div class="card">
+        <h2 style="text-align: center;"><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
+        <p style="text-align: center; color: #7094b8; font-size: 14px;">User အချက်အလက်များကို ဤနေရာတွင် ထိန်းချုပ်ပါ</p>
+        <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+        <label>User ဖုန်းနံပါတ်ဖြင့် ရှာပါ</label>
+        <input type="text" id="searchPhone" placeholder="ဥပမာ - 09123456789">
+        <button class="btn btn-search" id="btnSearch"><i class="fas fa-search"></i> ရှာဖွေမည်</button>
+        
+        <div id="loading"><i class="fas fa-spinner fa-spin"></i> ခဏစောင့်ပါ...</div>
+
+        <div id="userInfo" class="user-info">
+            <h4 id="resName" style="margin-bottom: 5px; font-size: 18px;">---</h4>
+            <p style="color: #b3d9ff;">လက်ရှိငွေ: <span id="resBalance" style="font-weight: bold; color: white;">0</span> Ks</p>
+            <hr style="border: 0.2px solid rgba(255,255,255,0.1); margin: 15px 0;">
+            
+            <label>ပြင်ဆင်လိုသော ပမာဏ</label>
+            <input type="number" id="amount" placeholder="ငွေပမာဏ ရိုက်ပါ">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-add" id="btnAdd">ပေါင်းမည် (+)</button>
+                <button class="btn btn-sub" id="btnSub">နှုတ်မည် (-)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // --- Admin Passcode စစ်ဆေးခြင်း ---
+    const ADMIN_PASSCODE = "889900"; // သင်အသုံးပြုမည့် လျှို့ဝှက်နံပါတ်ကို ဒီမှာ ပြောင်းပါ
+
+    async function checkAdmin() {
+        const { value: password } = await Swal.fire({
+            title: 'Admin Passcode ရိုက်ထည့်ပါ',
+            input: 'password',
+            inputPlaceholder: 'Enter Secret Code',
+            allowOutsideClick: false,
+            confirmButtonText: 'ဝင်မည်',
+            background: '#002140',
+            color: '#fff',
+            inputAttributes: { autocapitalize: 'off', autocorrect: 'off' }
+        });
+
+        if (password === ADMIN_PASSCODE) {
+            document.getElementById('adminPanel').style.display = 'block';
+        } else {
+            await Swal.fire('မှားယွင်းသည်', 'လျှို့ဝှက်နံပါတ် မမှန်ကန်ပါ', 'error');
+            window.location.href = "index.html"; // မှားရင် ပင်မစာမျက်နှာ ပြန်ပို့မည်
+        }
+    }
+    checkAdmin();
+
+    let targetUserUid = null;
+
+    // Search User
+    document.getElementById('btnSearch').onclick = async () => {
+        const phone = document.getElementById('searchPhone').value.trim();
+        if(!phone) return Swal.fire("သတိ", "ဖုန်းနံပါတ် ထည့်ပါ", "info");
+
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'none';
+
+        try {
+            const q = query(collection(db, "users"), where("phone", "==", phone));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                Swal.fire("မတွေ့ပါ", "အကောင့်မရှိပါ", "error");
+            } else {
+                querySnapshot.forEach((res) => {
+                    targetUserUid = res.id;
+                    const data = res.data();
+                    document.getElementById('resName').innerText = data.name;
+                    document.getElementById('resBalance').innerText = data.balance.toLocaleString();
+                    document.getElementById('userInfo').style.display = 'block';
+                });
+            }
+        } catch (e) { Swal.fire("Error", "ရှာမရပါ", "error"); }
+        document.getElementById('loading').style.display = 'none';
+    };
+
+    // Update Balance
+    async function updateBalance(type) {
+        const amt = parseInt(document.getElementById('amount').value);
+        if(!amt || amt <= 0) return Swal.fire("သတိ", "ပမာဏ မှန်ကန်စွာ ထည့်ပါ", "warning");
+
+        const finalAmount = (type === 'add') ? amt : -amt;
+
+        Swal.fire({
+            title: 'သေချာပါသလား?',
+            text: `ငွေပမာဏ ${amt} Ks ကို ${type === 'add' ? 'ပေါင်း' : 'နှုတ်'} မှာ ဖြစ်ပါတယ်`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#1890ff',
+            cancelButtonColor: '#f5222d',
+            confirmButtonText: 'လုပ်ဆောင်မည်'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const userRef = doc(db, "users", targetUserUid);
+                    await updateDoc(userRef, { balance: increment(finalAmount) });
+                    
+                    Swal.fire("အောင်မြင်သည်", "Update လုပ်ပြီးပါပြီ", "success").then(() => {
+                        location.reload();
+                    });
+                } catch (e) {
+                    Swal.fire("Error", "မအောင်မြင်ပါ", "error");
+                }
+            }
+        });
+    }
+
+    document.getElementById('btnAdd').onclick = () => updateBalance('add');
+    document.getElementById('btnSub').onclick = () => updateBalance('sub');
+
+</script>
+</body>
+</html>

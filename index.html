@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMK 2D - Blue Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --btn-blue: linear-gradient(135deg, #0062ff, #003db3); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 75px; }
+
+        #page-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(0, 123, 255, 0.2); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: linear-gradient(to bottom, #002d5a, #001f3f); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        .user-balance { text-align: right; font-size: 13px; }
+        .deposit-btn { background: linear-gradient(to bottom, #00aaff, #007bff); border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; color: white; cursor: pointer; }
+        .marquee-box { display: flex; align-items: center; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; font-size: 13px; color: #b3d9ff; }
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+        .game-card { position: relative; background: var(--bg-card); border-radius: 15px; overflow: hidden; aspect-ratio: 1.2 / 1; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+        .game-card img { width: 100%; height: 100%; object-fit: cover; }
+        .game-title { position: absolute; bottom: 0; width: 100%; text-align: center; padding: 10px 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); font-size: 14px; }
+        
+        .footer-nav { position: fixed; bottom: 0; width: 100%; background: #001a35; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(0,123,255,0.3); }
+        .nav-link { text-align: center; color: #7094b8; text-decoration: none; font-size: 11px; }
+        .nav-link i { font-size: 22px; display: block; margin-bottom: 5px; }
+        .active { color: var(--accent-blue); }
+        
+        #sectionModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: flex-end; }
+        .modal-box { background: #002d5a; width: 100%; padding: 25px 20px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 2px solid var(--accent-blue); animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .section-btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; background: var(--btn-blue); color: white; text-align: center; border-radius: 12px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="page-loader"><div class="spinner"></div><p style="margin-top: 15px; color: var(--accent-blue);">ဒေတာများ ရယူနေပါသည်...</p></div>
+
+    <header>
+        <div class="logo">MMK 2D</div>
+        <div class="user-balance">
+            <div id="uName">---</div>
+            <div style="font-weight: bold; color: white;"><span id="uBalance">0</span> <i class="fa-solid fa-circle-dollar-to-slot" style="color: var(--accent-blue); margin-left: 5px;"></i></div>
+        </div>
+        <button class="deposit-btn">ငွေသွင်း</button>
+    </header>
+
+    <div class="marquee-box"><marquee scrollamount="5">🙏 MMK 2D မှ ကြိုဆိုပါတယ် ⚡ အပြာရောင် Theme အသစ်ဖြင့် ယုံကြည်စိတ်ချစွာ ကစားနိုင်ပါပြီ ⚡</marquee></div>
+
+    <main class="game-grid">
+        <div class="game-card" onclick="toggleModal(true)"><div class="game-title">2D ထီ</div><img src="https://via.placeholder.com/200/003366/fff?text=2D"></div>
+        <div class="game-card"><div class="game-title">3D ထီ</div><img src="https://via.placeholder.com/200/003366/fff?text=3D"></div>
+    </main>
+
+    <div id="sectionModal" onclick="toggleModal(false)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px;">အချိန်အပိုင်းအခြား ရွေးပါ</h3>
+            <button onclick="goToSection('twod_12.html', 'section_12')" class="section-btn">12:01 section</button>
+            <button onclick="goToSection('twod_04.html', 'section_04')" class="section-btn">04:30 section</button>
+        </div>
+    </div>
+
+    <nav class="footer-nav">
+        <a href="#" class="nav-link active"><i class="fa-solid fa-house-chimney"></i><div>ပင်မ</div></a>
+        <a href="#" class="nav-link" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i><div>ထွက်ရန်</div></a>
+    </nav>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let sectionStatus = { section_12: true, section_04: true };
+
+    // Real-time Time Control Listener
+    onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
+        if (docSnap.exists()) sectionStatus = docSnap.data();
+    });
+
+    onAuthStateChanged(auth, (user) => {
+        const loader = document.getElementById('page-loader');
+        if (user) {
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('uName').innerText = data.name;
+                    document.getElementById('uBalance').innerText = data.balance.toLocaleString();
+                }
+                loader.style.display = 'none';
+            });
+        } else { window.location.href = "auth.html"; }
+    });
+
+    window.goToSection = (page, name) => {
+        if (sectionStatus[name]) {
+            window.location.href = page;
+        } else {
+            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "ဤအချိန်ပိုင်းအား ခေတ္တပိတ်ထားပါသည်။", icon: "error", confirmButtonColor: "#007bff", background: "#002d5a", color: "#fff" });
+        }
+    };
+
+    document.getElementById('btnLogout').onclick = () => { signOut(auth).then(() => { window.location.href = "auth.html"; }); };
+    window.toggleModal = (s) => { document.getElementById('sectionModal').style.display = s ? 'flex' : 'none'; };
+</script>
+</body>
+</html>

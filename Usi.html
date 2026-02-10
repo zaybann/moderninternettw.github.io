@@ -68,6 +68,8 @@
     <div class="menu-item active" onclick="switchTab('dashboard')"><i class="fas fa-home"></i> <span>Dashboard</span></div>
     <div class="menu-item" onclick="switchTab('payout')"><i class="fas fa-trophy"></i> <span>အလျော်ပေးရန်</span></div>
     <div class="menu-item" onclick="switchTab('settings')"><i class="fas fa-wallet"></i> <span>ငွေလက်ခံနံပါတ်များ</span></div>
+    <div class="menu-item" onclick="switchTab('transactions')"><i class="fas fa-exchange-alt"></i> <span>ငွေသွင်း/ထွက် စာရင်း</span></div>
+        
     <div class="menu-item" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></div>
 </div>
 
@@ -156,6 +158,23 @@
         </button>
     </div>
 </div>
+    <div id="tab-transactions" style="display: none;">
+    <h2>ငွေသွင်း/ငွေထုတ် တောင်းဆိုမှုများ</h2>
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>အချိန်</th>
+                    <th>အမျိုးအစား</th>
+                    <th>ဖုန်း/ID</th>
+                    <th>ပမာဏ</th>
+                    <th>လုပ်ဆောင်ချက်</th>
+                </tr>
+            </thead>
+            <tbody id="transTableBody"></tbody>
+        </table>
+    </div>
+    </div>
 </div>
 
 <script type="module">
@@ -191,13 +210,13 @@
     window.switchTab = (tab) => {
     document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
     document.getElementById('tab-payout').style.display = tab === 'payout' ? 'block' : 'none';
-    document.getElementById('tab-settings').style.display = tab === 'settings' ? 'block' : 'none'; // ထည့်ရန်
+    document.getElementById('tab-transactions').style.display = tab === 'transactions' ? 'block' : 'none';
     
     document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
     if (event) event.currentTarget.classList.add('active');
     
     if(tab === 'payout') loadBets('12:01 PM');
-    if(tab === 'settings') loadCurrentPaymentNumbers(); // ထည့်ရန်
+    if(tab === 'transactions') loadPendingTransactions(); // စာရင်းများကို Firebase မှ ဆွဲယူရန်
 };
 // လက်ရှိ သိမ်းထားသော နံပါတ်များကို Firebase မှ ဆွဲထုတ်ပြခြင်း
 async function loadCurrentPaymentNumbers() {
@@ -369,6 +388,55 @@ window.updatePaymentNumbers = async () => {
 
     if (sessionStorage.getItem("admin_auth") === "true") { document.getElementById('adminPanel').style.display = 'block'; }
     else { const pass = prompt("Pass:"); if(pass === "889900") { sessionStorage.setItem("admin_auth", "true"); location.reload(); } }
+// ငွေသွင်း/ထွက် စာရင်းများကို Firebase မှ Live ဆွဲထုတ်ခြင်း
+async function loadPendingTransactions() {
+    const q = query(collection(db, "transactions"), where("status", "==", "pending"), orderBy("timestamp", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        const tbody = document.getElementById('transTableBody');
+        tbody.innerHTML = "";
+        
+        snapshot.forEach((docSnap) => {
+            const d = docSnap.data();
+            const time = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString() : "-";
+            const color = d.type === 'deposit' ? '#52c41a' : '#f5222d';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-size: 11px;">${time}</td>
+                    <td style="color:${color}; font-weight:bold;">${d.type.toUpperCase()}<br>(${d.method})</td>
+                    <td>${d.phone}<br><small>${d.transactionId || ''}</small></td>
+                    <td>${d.amount.toLocaleString()} Ks</td>
+                    <td>
+                        <button class="btn btn-green" style="padding:5px; width:60px; font-size:11px; margin-bottom:4px;" onclick="handleTransaction('${docSnap.id}', 'approve', '${d.type}', '${d.uid}', ${d.amount})">လက်ခံ</button>
+                        <button class="btn btn-red" style="padding:5px; width:60px; font-size:11px;" onclick="handleTransaction('${docSnap.id}', 'reject', '${d.type}', '${d.uid}', ${d.amount})">ငြင်းပယ်</button>
+                    </td>
+                </tr>`;
+        });
+    });
+}
+
+// Admin က လက်ခံ သို့မဟုတ် ငြင်းပယ် လုပ်ဆောင်ခြင်း
+window.handleTransaction = async (id, action, type, uid, amount) => {
+    if(!confirm("သေချာပါသလား?")) return;
+    try {
+        if (action === 'approve') {
+            if (type === 'deposit') {
+                // ငွေသွင်းလက်ခံပါက User Balance ထဲ ငွေပေါင်းထည့်ပေးမည်
+                await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+            }
+            await updateDoc(doc(db, "transactions", id), { status: 'success' });
+            Swal.fire("အောင်မြင်သည်", "စာရင်းအတည်ပြုပြီးပါပြီ", "success");
+        } else {
+            if (type === 'withdraw') {
+                // ငွေထုတ်ငြင်းပယ်ပါက User ဆီက နှုတ်ထားသောငွေကို ပြန်ပေါင်းပေးမည်
+                await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+            }
+            await updateDoc(doc(db, "transactions", id), { status: 'rejected' });
+            Swal.fire("ငြင်းပယ်ပြီး", "စာရင်းကို ပယ်ဖျက်လိုက်ပါပြီ", "info");
+        }
+    } catch (e) { alert(e.message); }
+};
 </script>
 </body>
 </html>

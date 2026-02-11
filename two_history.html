@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ထိုးဂဏန်းမှတ်တမ်းများ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent: #1890ff; --white: #ffffff; --red: #ff4d4f; --green: #52c41a; --dim: #a6adb4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 20px; }
+        .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); position: sticky; top: 0; z-index: 100; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
+        .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
+        .tabs { display: flex; background: var(--bg-card); margin: 10px; border-radius: 8px; overflow: hidden; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: var(--dim); transition: 0.3s; }
+        .tab.active { background: var(--accent); color: white; font-weight: bold; }
+        .container { padding: 10px; }
+        .history-card { background: var(--bg-card); border-radius: 12px; margin-bottom: 12px; border-left: 5px solid var(--accent); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .card-header { padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .info-left { display: flex; flex-direction: column; gap: 4px; }
+        .date-time { font-size: 11px; color: var(--dim); }
+        .total-amt { font-size: 14px; font-weight: bold; }
+        .status { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: bold; margin-bottom: 4px; display: inline-block; }
+        .status.Win { background: var(--green); color: #000; }
+        .status.Lose { background: var(--red); color: #fff; }
+        .status.pending { background: #eccc68; color: #000; }
+        .card-details { max-height: 0; padding: 0 15px; transition: 0.3s ease-out; background: rgba(0,0,0,0.2); overflow: hidden; }
+        .card-details.open { max-height: 1500px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .nums-grid { font-size: 14px; line-height: 1.8; color: #ddd; word-break: break-all; }
+        .win-box { background: rgba(82, 196, 26, 0.1); border: 1px dashed var(--green); padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 13px; color: var(--green); }
+        #loading { text-align: center; padding: 50px; color: var(--dim); }
+        .arrow { font-size: 12px; color: var(--dim); transition: 0.3s; }
+        .arrow.rotated { transform: rotate(180deg); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="header-title">ထိုးဂဏန်းမှတ်တမ်းများ</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" id="tabPending" onclick="changeTab('pending')">ထိုးထားဆဲ</div>
+        <div class="tab" id="tabFinished" onclick="changeTab('finished')">ထွက်ပြီးသား</div>
+    </div>
+
+    <div class="container" id="history-container">
+        <div id="loading"><i class="fas fa-spinner fa-spin"></i> မှတ်တမ်းများ ရှာနေပါသည်...</div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+        projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+        messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let currentUid = null;
+    let userPhone = null;
+    let currentView = 'pending';
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) { 
+            currentUid = user.uid;
+            // email ကနေ ဖုန်းနံပါတ်ကို ခွဲယူမယ် (09xxxxxxx)
+            userPhone = user.email.split('@')[0];
+            loadHistory(); 
+        } else { 
+            window.location.href = "login.html"; 
+        }
+    });
+
+    window.changeTab = (type) => {
+        currentView = type;
+        document.getElementById('tabPending').classList.toggle('active', type === 'pending');
+        document.getElementById('tabFinished').classList.toggle('active', type === 'finished');
+        loadHistory();
+    };
+
+    window.toggleCard = (id) => {
+        const details = document.getElementById('details-' + id);
+        const arrow = document.getElementById('arrow-' + id);
+        if(details) details.classList.toggle('open');
+        if(arrow) arrow.classList.toggle('rotated');
+    };
+
+    async function loadHistory() {
+        const container = document.getElementById('history-container');
+        container.innerHTML = '<div id="loading"><i class="fas fa-spinner fa-spin"></i> ခေတ္တစောင့်ပါ...</div>';
+        try {
+            const collName = (currentView === 'pending') ? "bets" : "user_history";
+            
+            // ၁။ လုံခြုံရေးအတွက် UID နဲ့ပဲ အဓိကရှာမယ်
+            const q = query(collection(db, collName), where("uid", "==", currentUid));
+            const snap = await getDocs(q);
+            
+            let docsArray = [];
+            snap.forEach(doc => { docsArray.push({ ...doc.data(), id: doc.id }); });
+
+            // ၂။ အကယ်၍ UID နဲ့ရှာလို့မတွေ့ခဲ့ရင် Phone နံပါတ်နဲ့ ထပ်ရှာမယ် (Data အဟောင်းများအတွက်)
+            if (docsArray.length === 0) {
+                const qPhone = query(collection(db, collName), where("phone", "==", userPhone));
+                const snapPhone = await getDocs(qPhone);
+                snapPhone.forEach(doc => { docsArray.push({ ...doc.data(), id: doc.id }); });
+            }
+
+            container.innerHTML = "";
+            if (docsArray.length === 0) {
+                container.innerHTML = `<div id="loading">မှတ်တမ်းမရှိသေးပါ။</div>`;
+                return;
+            }
+
+            // အချိန်အလိုက် Sorting စီခြင်း
+            docsArray.sort((a, b) => {
+                const tA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                const tB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                return tB - tA;
+            });
+
+            docsArray.forEach((data) => {
+                const isFinished = (currentView === 'finished');
+                const status = data.status || "pending";
+                const isWin = status === "Win";
+                const accentColor = isFinished ? (isWin ? "#52c41a" : "#ff4d4f") : "#eccc68";
+                const itemsText = data.items ? data.items.map(i => `${i.num}(${i.amt})`).join(", ") : "စာရင်းမရှိပါ";
+
+                container.innerHTML += `
+                    <div class="history-card" style="border-left-color: ${accentColor}">
+                        <div class="card-header" onclick="toggleCard('${data.id}')">
+                            <div class="info-left">
+                                <span class="date-time">${data.date || ""} | ${data.time || ""}</span>
+                                <span class="total-amt">${isFinished && isWin ? "ရရှိငွေ:" : "စုစုပေါင်း:"} ${(isFinished && isWin ? (data.payout || 0) : (data.total || 0)).toLocaleString()} Ks</span>
+                            </div>
+                            <div class="info-right" style="text-align:right">
+                                <span class="status ${status}">${isFinished ? (isWin ? 'ပေါက်သည်' : 'မပေါက်ပါ') : 'စောင့်ဆိုင်းဆဲ'}</span><br>
+                                <i class="fas fa-chevron-down arrow" id="arrow-${data.id}"></i>
+                            </div>
+                        </div>
+                        <div class="card-details" id="details-${data.id}">
+                            <div style="font-size:12px; color:var(--accent); margin-bottom:5px; font-weight:bold;">ထိုးခဲ့သည့်ဂဏန်းများ -</div>
+                            <div class="nums-grid">${itemsText}</div>
+                            ${isFinished ? `
+                                <div class="win-box">
+                                    <i class="fas fa-bullseye"></i> ပေါက်ဂဏန်း: <b>${data.winNum || "-"}</b><br>
+                                    ${isWin ? "ဂုဏ်ယူပါတယ်! အလျော်ပေးပြီးပါပြီ။" : "နောက်တစ်ကြိမ် ကံကောင်းပါစေ။"}
+                                </div>
+                            ` : ""}
+                        </div>
+                    </div>`;
+            });
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = `<div id="loading" style="color:var(--red)">အချက်အလက်ယူရာတွင် အမှားရှိနေပါသည်။</div>`;
+        }
+    }
+</script>
+</body>
+</html>

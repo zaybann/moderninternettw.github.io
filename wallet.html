@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ငွေအိတ် - Wallet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent: #1890ff; --white: #ffffff; --green: #52c41a; --red: #ff4d4f; --dim: #a6adb4; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); overflow-x: hidden; }
+        
+        /* Fullscreen Loading Screen */
+        #full-loading { position: fixed; inset: 0; background: var(--bg-dark); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+        .loader { width: 48px; height: 48px; border: 5px solid #FFF; border-bottom-color: var(--accent); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header */
+        .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); position: sticky; top: 0; z-index: 100; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
+        .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
+
+        /* Balance Card */
+        .balance-card { background: linear-gradient(135deg, var(--bg-card), #004080); margin: 20px; padding: 30px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+        .balance-amt { font-size: 35px; font-weight: bold; color: #fff; }
+
+        /* Actions */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 20px; }
+        .action-btn { background: var(--bg-card); padding: 25px 15px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .action-btn i { font-size: 28px; margin-bottom: 10px; display: block; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 15px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Admin Phone Number Box */
+        .admin-num-box { background: #001226; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; border: 1px dashed var(--accent); }
+        .copy-btn { background: rgba(24,144,255,0.2); border: none; color: var(--accent); padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-left: 10px; }
+
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #001f3f; color: white; font-size: 16px; outline: none; }
+        .submit-btn { width: 100%; padding: 14px; border-radius: 8px; border: none; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
+        .close-btn { width: 100%; padding: 10px; margin-top: 10px; background: transparent; color: var(--dim); border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="full-loading"><span class="loader"></span></div>
+
+    <div class="header">
+        <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="header-title">ငွေအိတ် (Wallet)</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <div class="balance-card">
+        <div style="font-size: 14px; color: var(--dim); margin-bottom: 10px;">လက်ရှိလက်ကျန်ငွေ (Ks)</div>
+        <div class="balance-amt" id="user-balance">0</div>
+    </div>
+
+    <div class="action-grid">
+        <div class="action-btn" onclick="openModal('deposit')">
+            <i class="fas fa-arrow-circle-down" style="color: var(--green);"></i>
+            <span>ငွေသွင်းရန်</span>
+        </div>
+        <div class="action-btn" onclick="openModal('withdraw')">
+            <i class="fas fa-arrow-circle-up" style="color: var(--red);"></i>
+            <span>ငွေထုတ်ရန်</span>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle" style="text-align:center; margin-bottom:15px;">ငွေသွင်းမည်</h3>
+            
+            <div id="admin-num-display" class="admin-num-box" style="display:none;">
+                <p style="font-size: 12px; color: var(--dim); margin-bottom: 5px;">အောက်ပါနံပါတ်သို့ ငွေလွှဲပါ (နှိပ်၍ Copy ကူးပါ)</p>
+                <div style="display: flex; align-items: center; justify-content: center;">
+                    <b id="admin-phone" style="font-size: 20px; color: var(--accent);">စောင့်ဆိုင်းပါ...</b>
+                    <button type="button" class="copy-btn" onclick="copyAdminNum()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <form id="paymentForm">
+                <select id="method" required onchange="updateAdminPhone()">
+                    <option value="KPay">KPay</option>
+                    <option value="WavePay">WavePay</option>
+                </select>
+                <input type="number" id="amount" placeholder="ပမာဏ" required min="1000">
+                <input type="text" id="phone" placeholder="သင့်ဖုန်းနံပါတ်" required>
+                <div id="deposit-only-fields">
+                    <input type="text" id="transactionId" placeholder="လုပ်ငန်းစဉ်အမှတ် (နောက်ဆုံး ၆ လုံး)">
+                </div>
+                <button type="submit" class="submit-btn">တင်ပြမည်</button>
+            </form>
+            <button class="close-btn" onclick="closeModal()">ပယ်ဖျက်မည်</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, addDoc, updateDoc, increment, collection, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let mode = 'deposit';
+        let adminSettings = { kpay: "", wave: "" };
+
+        // Admin နံပါတ်များကို ဆွဲယူခြင်း
+        async function fetchAdminNumbers() {
+            const snap = await getDoc(doc(db, "settings", "payments"));
+            if (snap.exists()) adminSettings = snap.data();
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                fetchAdminNumbers();
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists()) {
+                        document.getElementById('user-balance').innerText = snap.data().balance.toLocaleString();
+                        document.getElementById('full-loading').style.display = 'none';
+                    }
+                });
+            } else { window.location.href = "login.html"; }
+        });
+
+        // Copy Function
+        window.copyAdminNum = () => {
+            const phoneNum = document.getElementById('admin-phone').innerText;
+            navigator.clipboard.writeText(phoneNum).then(() => {
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copy ကူးပြီးပါပြီ', showConfirmButton: false, timer: 1500 });
+            });
+        };
+
+        window.updateAdminPhone = () => {
+            const method = document.getElementById('method').value;
+            const display = document.getElementById('admin-phone');
+            display.innerText = (method === 'KPay') ? adminSettings.kpay : adminSettings.wave;
+        };
+
+        window.openModal = (type) => {
+            mode = type;
+            document.getElementById('modalTitle').innerText = (type === 'deposit') ? 'ငွေသွင်းမည်' : 'ငွေထုတ်မည်';
+            document.getElementById('deposit-only-fields').style.display = (type === 'deposit') ? 'block' : 'none';
+            document.getElementById('admin-num-display').style.display = (type === 'deposit') ? 'block' : 'none';
+            if(type === 'deposit') updateAdminPhone();
+            document.getElementById('paymentModal').style.display = 'flex';
+        };
+
+        window.closeModal = () => { document.getElementById('paymentModal').style.display = 'none'; document.getElementById('paymentForm').reset(); };
+
+        document.getElementById('paymentForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const amt = parseInt(document.getElementById('amount').value);
+            const curBal = parseInt(document.getElementById('user-balance').innerText.replace(/,/g, ''));
+
+            if (mode === 'withdraw' && amt > curBal) return Swal.fire("အမှား", "လက်ကျန်ငွေမလုံလောက်ပါ", "error");
+
+            try {
+                Swal.fire({ title: 'လုပ်ဆောင်နေသည်...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+                
+                // ၁။ Transaction မှတ်တမ်းသွင်းခြင်း
+                await addDoc(collection(db, "transactions"), {
+                    uid: currentUser.uid,
+                    userEmail: currentUser.email,
+                    phone: document.getElementById('phone').value,
+                    amount: amt,
+                    method: document.getElementById('method').value,
+                    type: mode,
+                    transactionId: (mode === 'deposit') ? document.getElementById('transactionId').value : 'Withdrawal Request',
+                    status: 'pending',
+                    timestamp: serverTimestamp()
+                });
+
+                // ၂။ ငွေထုတ်ခြင်းဖြစ်ပါက ချက်ချင်းနှုတ်ခြင်း
+                if (mode === 'withdraw') {
+                    await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-amt) });
+                }
+
+                closeModal();
+                Swal.fire("အောင်မြင်သည်", (mode === 'withdraw') ? "ငွေထုတ်ယူမှု တင်ပြပြီးပါပြီ။" : "ငွေသွင်းမှု တင်ပြပြီးပါပြီ။", "success");
+            } catch (err) { Swal.fire("Error", err.message, "error"); }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bet Confirm Table</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --red: #ff3b30; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 30px; }
+        .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
+        .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
+        .container { padding: 15px; }
+        .balance-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(0,123,255,0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--accent-blue); }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(0,0,0,0.2); color: var(--accent-blue); font-size: 14px; }
+        .price-input { width: 85px; padding: 8px; border-radius: 5px; border: 1px solid #444; background: #001f3f; color: var(--accent-blue); text-align: center; font-weight: bold; outline: none; }
+        .del-btn { color: var(--red); cursor: pointer; font-size: 18px; }
+        .footer-total { background: var(--bg-card); padding: 20px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .total-amount { font-size: 24px; font-weight: bold; color: var(--accent-blue); margin: 10px 0; }
+        .btn-submit { background: var(--accent-blue); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
+        .btn-submit:disabled { background: #444; opacity: 0.7; }
+        #pop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="#" onclick="history.back()" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="header-title">စာရင်းအတည်ပြုရန်</div>
+    </div>
+
+    <div class="container">
+        <div class="balance-info">
+            <span><i class="fas fa-wallet"></i> လက်ကျန်ငွေ</span>
+            <b id="userBalanceDisplay">--- Ks</b>
+        </div>
+
+        <table>
+            <thead>
+                <tr><th>ဂဏန်း</th><th>ပမာဏ</th><th>ဖျက်</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+
+        <div class="footer-total">
+            <div id="showTypeTime" style="font-size: 12px; opacity: 0.7; margin-bottom: 5px;"></div>
+            <div style="font-size: 14px; opacity: 0.8;">စုစုပေါင်း ထိုးကြေး</div>
+            <div class="total-amount" id="showTotal">0 MMK</div>
+            <button class="btn-submit" id="submitBtn" onclick="processBet()">အတည်ပြုမည်</button>
+        </div>
+    </div>
+
+    <div id="pop">
+        <i class="fas fa-check-circle" style="font-size: 70px; color: #4cd137;"></i>
+        <h2 style="margin-top: 15px;">ထိုးခြင်း အောင်မြင်ပါသည်</h2>
+        <button class="btn-submit" style="margin-top: 25px; width: 180px;" onclick="finish()">အိုကေ</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, increment, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let tempBetData = JSON.parse(localStorage.getItem('tempBet'));
+        let userBalance = 0;
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
+                    if (snap.exists()) {
+                        userBalance = snap.data().balance;
+                        document.getElementById('userBalanceDisplay').innerText = userBalance.toLocaleString() + " Ks";
+                        updateTotal();
+                    }
+                });
+            } else { window.location.href = "auth.html"; }
+        });
+
+        function renderTable() {
+            if (!tempBetData) return;
+            document.getElementById('showTypeTime').innerText = `${tempBetData.type} (${tempBetData.time})`;
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            tempBetData.nums.forEach((n, index) => {
+                tbody.innerHTML += `<tr>
+                    <td><b style="font-size: 18px;">${n}</b></td>
+                    <td><input type="number" class="price-input" value="${tempBetData.price}" data-index="${index}" oninput="updateTotal()"></td>
+                    <td><i class="fas fa-trash-alt del-btn" onclick="removeNum(${index})"></i></td>
+                </tr>`;
+            });
+            updateTotal();
+        }
+
+        window.removeNum = function(index) {
+            tempBetData.nums.splice(index, 1);
+            renderTable();
+            localStorage.setItem('tempBet', JSON.stringify(tempBetData));
+        }
+
+        window.updateTotal = function() {
+            let total = 0;
+            document.querySelectorAll('.price-input').forEach(input => total += (parseInt(input.value) || 0));
+            document.getElementById('showTotal').innerText = total.toLocaleString() + " MMK";
+            document.getElementById('submitBtn').disabled = (total > userBalance || total === 0);
+        }
+
+        window.processBet = async function() {
+            const total = parseInt(document.getElementById('showTotal').innerText.replace(/,/g, ''));
+            const finalItems = [];
+            document.querySelectorAll('.price-input').forEach((input) => {
+                const idx = input.getAttribute('data-index');
+                finalItems.push({ num: tempBetData.nums[idx], amt: parseInt(input.value) });
+            });
+
+            const d = new Date();
+            const todayStr = `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+
+            try {
+                document.getElementById('submitBtn').disabled = true;
+                await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total) });
+                await addDoc(collection(db, "bets"), {
+                    uid: currentUser.uid,
+                    phone: currentUser.email.split('@')[0],
+                    items: finalItems,
+                    total: total,
+                    time: tempBetData.time.includes("12:01") ? "12:01 PM" : "04:30 PM",
+                    type: tempBetData.type,
+                    date: todayStr,
+                    timestamp: serverTimestamp()
+                });
+                document.getElementById('pop').style.display = 'flex';
+            } catch (err) {
+                alert("Error: " + err.message);
+                document.getElementById('submitBtn').disabled = false;
+            }
+        }
+
+        window.finish = function() { localStorage.removeItem('tempBet'); window.location.href = "two_history.html"; }
+        renderTable();
+    </script>
+</body>
+</html>

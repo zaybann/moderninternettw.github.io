@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #000b14; --card-bg: #001e36; --accent: #1890ff; --white: #ffffff; --text-dim: #a6adb4; }
+        body { background: var(--bg-dark); color: var(--white); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        
+        .info-card { background: var(--card-bg); width: 100%; max-width: 500px; padding: 25px; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); }
+        .header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+        .header h2 { color: var(--accent); margin: 0; }
+
+        .search-box { margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; background: #000b14; border: 1px solid rgba(25, 144, 255, 0.3); border-radius: 8px; color: white; margin-bottom: 10px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--accent); }
+        
+        .btn-search { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-search:hover { background: #40a9ff; }
+
+        .result-area { display: none; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px; border: 1px dashed rgba(255,255,255,0.1); }
+        .info-item { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+        .label { color: var(--text-dim); font-size: 14px; }
+        .value { color: var(--white); font-weight: bold; }
+        .pass-value { color: #ffc107; letter-spacing: 1px; } /* Password ကို အရောင်ခွဲထားသည် */
+    </style>
+</head>
+<body>
+
+<div class="info-card">
+    <div class="header">
+        <h2><i class="fas fa-user-shield"></i> User Manager</h2>
+        <p style="font-size: 12px; color: var(--text-dim);">အသုံးပြုသူ၏ အချက်အလက်များကို ရှာဖွေပါ</p>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchPhone" placeholder="ရှာဖွေမည့် ဖုန်းနံပါတ် ရိုက်ပါ">
+        <button class="btn-search" id="btnSearch">
+            <i class="fas fa-search"></i> အချက်အလက် ဆွဲယူမည်
+        </button>
+    </div>
+
+    <div class="result-area" id="resultArea">
+        <div class="info-item">
+            <span class="label">အမည်:</span>
+            <span class="value" id="resName">-</span>
+        </div>
+        <div class="info-item">
+            <span class="label">ဖုန်းနံပါတ်:</span>
+            <span class="value" id="resPhone">-</span>
+        </div>
+        <div class="info-item">
+            <span class="label">လက်ရှိလက်ကျန်ငွေ:</span>
+            <span class="value" style="color: #52c41a;" id="resBalance">0 Ks</span>
+        </div>
+        <div class="info-item" style="border-bottom: none;">
+            <span class="label">စကားဝှက် (Password):</span>
+            <span class="value pass-value" id="resPass">-</span>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('btnSearch').onclick = async () => {
+        const phone = document.getElementById('searchPhone').value;
+        if(!phone) return Swal.fire("သတိ", "ဖုန်းနံပါတ် ရိုက်ထည့်ပါ", "warning");
+
+        Swal.fire({ title: 'ရှာဖွေနေသည်...', didOpen: () => Swal.showLoading() });
+
+        try {
+            const q = query(collection(db, "users"), where("phone", "==", phone));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                Swal.fire("မတွေ့ပါ", "ဤဖုန်းနံပါတ်ဖြင့် အကောင့်ဖွင့်ထားခြင်း မရှိပါ။", "error");
+                document.getElementById('resultArea').style.display = 'none';
+            } else {
+                Swal.close();
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    document.getElementById('resName').innerText = data.name;
+                    document.getElementById('resPhone').innerText = data.phone;
+                    document.getElementById('resBalance').innerText = data.balance.toLocaleString() + " Ks";
+                    // auth.html မှာ ကျွန်တော်တို့ သိမ်းခဲ့တဲ့ password field ကို ဒီမှာ ပြန်ပြပါမယ်
+                    document.getElementById('resPass').innerText = data.password || "မတွေ့ပါ";
+                    
+                    document.getElementById('resultArea').style.display = 'block';
+                });
+            }
+        } catch (e) {
+            Swal.fire("Error", e.message, "error");
+        }
+    };
+</script>
+
+</body>
+</html>

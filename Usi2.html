@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMK 2D - Professional Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; 
+            --sidebar-color: #001529;
+            --card-bg: #001e36;
+            --accent: #1890ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+        }
+        body { background: var(--bg-dark); color: var(--white); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--sidebar-color); height: 100vh; position: fixed; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-header { padding: 25px; text-align: center; font-size: 20px; font-weight: bold; color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .menu-item { padding: 15px 25px; color: var(--text-dim); display: flex; align-items: center; cursor: pointer; text-decoration: none; transition: 0.3s; }
+        .menu-item:hover, .menu-item.active { background: rgba(24, 144, 255, 0.1); color: var(--white); border-left: 4px solid var(--accent); }
+        .menu-item i { margin-right: 15px; }
+
+        /* Main Content */
+        .main-content { margin-left: 260px; padding: 30px; width: calc(100% - 260px); }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        h2 { margin-top: 0; color: var(--accent); margin-bottom: 20px; }
+
+        /* Form Elements */
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #1d39c4; background: #000b14; color: white; box-sizing: border-box; outline: none; }
+        .btn { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        .btn-blue { background: var(--accent); color: white; }
+        .btn-green { background: #52c41a; color: white; }
+        .btn-red { background: #f5222d; color: white; }
+
+        /* Switch UI */
+        .switch-row { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+        .switch { position: relative; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #444; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: #52c41a; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* Tabs & Tables */
+        .tab-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; background: #002140; color: white; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: var(--accent); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255,255,255,0.05); color: var(--accent); padding: 12px; text-align: left; border-bottom: 2px solid var(--accent); }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar-header, .menu-item span { display: none; }
+            .main-content { margin-left: 70px; width: calc(100% - 70px); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="sidebar-header">MMK 2D ADMIN</div>
+    <div class="menu-list">
+        <div class="menu-item active" onclick="switchTab('dashboard')"><i class="fas fa-home"></i> <span>Dashboard</span></div>
+        <div class="menu-item" onclick="switchTab('transactions')"><i class="fas fa-exchange-alt"></i> <span>ငွေသွင်း/ထွက် စာရင်း</span></div>
+        <div class="menu-item" onclick="switchTab('payout')"><i class="fas fa-trophy"></i> <span>အလျော်ပေးရန်</span></div>
+        <div class="menu-item" onclick="switchTab('payout3d')"><i class="fas fa-star"></i> <span>3D အလျော်ပေးရန်</span></div>
+        <div class="menu-item" onclick="switchTab('settings')"><i class="fas fa-wallet"></i> <span>ငွေလက်ခံနံပါတ်များ</span></div>
+        <div class="menu-item" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></div>
+    </div>
+</div>
+
+<div class="main-content" id="adminPanel" style="display: none;">
+    
+    <div id="tab-dashboard">
+        <h2>Dashboard Overview</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+            <div class="card">
+                <h3><i class="fas fa-clock"></i> အချိန်ပိုင်း ပိတ်/ဖွင့်</h3>
+                <div class="switch-row"><span>12:01 PM Section</span><label class="switch"><input type="checkbox" id="tog12"><span class="slider"></span></label></div>
+                <div class="switch-row"><span>04:30 PM Section</span><label class="switch"><input type="checkbox" id="tog04"><span class="slider"></span></label></div>
+                <div class="switch-row" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: 10px;">
+                    <span style="color: #ffc107;">3D Section (All Day)</span>
+                    <label class="switch"><input type="checkbox" id="tog3D"><span class="slider"></span></label>
+                </div>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-ban"></i> ဂဏန်းပိတ်ရန်</h3>
+                <input type="text" id="close12" placeholder="12:01 PM ပိတ်ဂဏန်းများ">
+                <input type="text" id="close04" placeholder="04:30 PM ပိတ်ဂဏန်းများ">
+                <button class="btn btn-blue" id="btnUpdateClose">ဂဏန်းပိတ်သိမ်းမည်</button>
+            </div>
+            <div class="card">
+                <h3><i class="fas fa-wallet"></i> ငွေသွင်း/ထုတ်</h3>
+                <input type="text" id="searchPhone" placeholder="ဖုန်းနံပါတ်ဖြင့် ရှာရန်...">
+                <button class="btn btn-blue" id="btnSearch">ရှာဖွေမည်</button>
+                <div id="userInfo" style="display:none; margin-top: 15px; border-top: 1px solid #444; padding-top: 15px;">
+                    <p id="resName"></p>
+                    <p>လက်ကျန်ငွေ: <span id="resBalance" style="color: #52c41a;"></span> Ks</p>
+                    <input type="number" id="amount" placeholder="ပမာဏ">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-green" id="btnAdd">+</button>
+                        <button class="btn btn-red" id="btnSub">-</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+            <h3><i class="fas fa-users"></i> အသုံးပြုသူများစာရင်း</h3>
+            <table>
+                <thead><tr><th>အမည်</th><th>ဖုန်းနံပါတ်</th><th>လက်ကျန်ငွေ</th></tr></thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-transactions" style="display: none;">
+        <h2>ငွေသွင်း/ငွေထုတ် တောင်းဆိုမှုများ</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr><th>အချိန်</th><th>အမျိုးအစား</th><th>ဖုန်း/ID</th><th>ပမာဏ</th><th>လုပ်ဆောင်ချက်</th></tr>
+                </thead>
+                <tbody id="transTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-payout" style="display: none;">
+        <h2>အလျော်ပေးခြင်းနှင့် စာရင်းစစ်ခြင်း</h2>
+        <div class="card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>12:01 PM</h4>
+                    <input type="text" id="winNum12" maxlength="2" placeholder="ပေါက်ဂဏန်း">
+                    <button class="btn btn-green" onclick="processPayout('12:01 PM')">အလျော်ပေးမည်</button>
+                </div>
+                <div>
+                    <h4>04:30 PM</h4>
+                    <input type="text" id="winNum04" maxlength="2" placeholder="ပေါက်ဂဏန်း">
+                    <button class="btn btn-green" onclick="processPayout('04:30 PM')">အလျော်ပေးမည်</button>
+                </div>
+            </div>
+        </div>
+        <div class="tab-bar">
+            <button class="tab-btn active" id="btn12" onclick="loadBets('12:01 PM')">မနက်ပိုင်း</button>
+            <button class="tab-btn" id="btn04" onclick="loadBets('04:30 PM')">ညနေပိုင်း</button>
+        </div>
+        <div class="card">
+            <table>
+                <thead><tr><th>ဖုန်း</th><th>ဂဏန်း</th><th>စုစုပေါင်း</th></tr></thead>
+                <tbody id="betTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="tab-payout3d" style="display: none;">
+        <h2>3D အလျော်ပေးခြင်း (၇၄၀ ဆ)</h2>
+        <div class="card">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div>
+                    <label style="color:var(--text-dim); display:block; margin-bottom:5px;">စတင်မည့်ရက် (1.1.2026)</label>
+                    <input type="text" id="startDate3D" placeholder="D.M.YYYY">
+                </div>
+                <div>
+                    <label style="color:var(--text-dim); display:block; margin-bottom:5px;">နောက်ဆုံးရက် (16.1.2026)</label>
+                    <input type="text" id="endDate3D" placeholder="D.M.YYYY">
+                </div>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="color:var(--text-dim); display:block; margin-bottom:5px;">3D ပေါက်ဂဏန်း</label>
+                <input type="number" id="winNum3D" placeholder="၃ လုံးရိုက်ပါ" style="font-size:22px; text-align:center;">
+            </div>
+            <button class="btn btn-green" onclick="processPayout3D()">
+                <i class="fas fa-check-double"></i> စာရင်းစစ်ပြီး အလျော်ပေးမည်
+            </button>
+        </div>
+    </div>
+
+    <div id="tab-settings" style="display: none;">
+        <h2>ငွေလက်ခံဖုန်းနံပါတ်များ ပြင်ဆင်ရန်</h2>
+        <div class="card" style="max-width: 450px;">
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom: 8px; font-weight: bold; color: var(--text-dim);">KPay ဖုန်းနံပါတ်</label>
+                <input type="text" id="kpay-num" placeholder="09xxxxxxxxx">
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom: 8px; font-weight: bold; color: var(--text-dim);">WavePay ဖုန်းနံပါတ်</label>
+                <input type="text" id="wave-num" placeholder="09xxxxxxxxx">
+            </div>
+            <button class="btn btn-blue" onclick="updatePaymentNumbers()">
+                <i class="fas fa-save"></i> နံပါတ်များ အပ်ဒိတ်လုပ်မည်
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, doc, getDocs, updateDoc, increment, query, where, onSnapshot, setDoc, deleteDoc, addDoc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const getTodayStr = () => {
+        const d = new Date();
+        return `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+    };
+
+    // Authentication (Original)
+    if (sessionStorage.getItem("admin_auth") !== "true") {
+        const pass = prompt("Admin Passcode:");
+        if (pass === "889900") { sessionStorage.setItem("admin_auth", "true"); location.reload(); }
+        else { window.location.href = "index.html"; }
+    } else { document.getElementById('adminPanel').style.display = 'block'; initAdmin(); }
+
+    // Navigation
+    window.switchTab = (tab) => {
+        document.getElementById('tab-dashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+        document.getElementById('tab-payout').style.display = tab === 'payout' ? 'block' : 'none';
+        document.getElementById('tab-payout3d').style.display = tab === 'payout3d' ? 'block' : 'none';
+        document.getElementById('tab-settings').style.display = tab === 'settings' ? 'block' : 'none';
+        document.getElementById('tab-transactions').style.display = tab === 'transactions' ? 'block' : 'none';
+        
+        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+        if (event) event.currentTarget.classList.add('active');
+        
+        if(tab === 'payout') loadBets('12:01 PM');
+        if(tab === 'settings') loadCurrentPaymentNumbers();
+        if(tab === 'transactions') loadTransactions();
+    };
+
+    // --- Added Transactions Logic ---
+    function loadTransactions() {
+        const q = query(collection(db, "transactions"), where("status", "==", "pending"));
+        onSnapshot(q, (snapshot) => {
+            const tbody = document.getElementById('transTableBody');
+            tbody.innerHTML = "";
+            snapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+                const time = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString() : "-";
+                tbody.innerHTML += `<tr>
+                    <td>${time}</td>
+                    <td>${d.type === 'deposit' ? 'သွင်း' : 'ထုတ်'} (${d.method})</td>
+                    <td>${d.phone}<br><small>${d.transactionId}</small></td>
+                    <td>${d.amount.toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-green" style="padding:5px; width:50px; font-size:10px; margin-bottom:2px;" onclick="handleRequest('${docSnap.id}', 'approve', '${d.type}', '${d.uid}', ${d.amount})">လက်ခံ</button>
+                        <button class="btn btn-red" style="padding:5px; width:50px; font-size:10px;" onclick="handleRequest('${docSnap.id}', 'reject', '${d.type}', '${d.uid}', ${d.amount})">ပယ်ဖျက်</button>
+                    </td>
+                </tr>`;
+            });
+        });
+    }
+
+    window.handleRequest = async (id, action, type, uid, amount) => {
+        if(!confirm("အတည်ပြုပါသလား?")) return;
+        try {
+            if (action === 'approve') {
+                if (type === 'deposit') await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+                await updateDoc(doc(db, "transactions", id), { status: 'success' });
+            } else {
+                if (type === 'withdraw') await updateDoc(doc(db, "users", uid), { balance: increment(amount) });
+                await updateDoc(doc(db, "transactions", id), { status: 'rejected' });
+            }
+            Swal.fire("Success");
+        } catch (e) { alert(e.message); }
+    };
+
+    // --- Original Functions ---
+    async function loadCurrentPaymentNumbers() {
+        const snap = await getDoc(doc(db, "settings", "payments"));
+        if (snap.exists()) {
+            document.getElementById('kpay-num').value = snap.data().kpay || "";
+            document.getElementById('wave-num').value = snap.data().wave || "";
+        }
+    }
+
+    window.updatePaymentNumbers = async () => {
+        const kpay = document.getElementById('kpay-num').value;
+        const wave = document.getElementById('wave-num').value;
+        if(!kpay || !wave) return Swal.fire("သတိပေးချက်", "နံပါတ်များ ပြည့်စုံအောင် ဖြည့်ပါ", "warning");
+        try {
+            await setDoc(doc(db, "settings", "payments"), { kpay, wave }, { merge: true });
+            Swal.fire("အောင်မြင်သည်", "နံပါတ်များ အပ်ဒိတ်လုပ်ပြီးပါပြီ", "success");
+        } catch (e) { Swal.fire("အမှား", e.message, "error"); }
+    };
+
+    function initAdmin() {
+        const timeRef = doc(db, "settings", "time_control");
+        const closeRef = doc(db, "settings", "close_numbers");
+        
+        onSnapshot(timeRef, (s) => { 
+            if (s.exists()) { 
+                document.getElementById('tog12').checked = s.data().section_12; 
+                document.getElementById('tog04').checked = s.data().section_04; 
+                // 3D Switch Status
+                if(document.getElementById('tog3D')) document.getElementById('tog3D').checked = s.data().section_3d;
+            }
+        });
+        
+        onSnapshot(closeRef, (s) => { if (s.exists()) { document.getElementById('close12').value = s.data().section_12 || ""; document.getElementById('close04').value = s.data().section_04 || ""; }});
+        
+        document.getElementById('tog12').onchange = () => updateDoc(timeRef, { section_12: document.getElementById('tog12').checked });
+        document.getElementById('tog04').onchange = () => updateDoc(timeRef, { section_04: document.getElementById('tog04').checked });
+        // 3D OnChange Event
+        document.getElementById('tog3D').onchange = () => updateDoc(timeRef, { section_3d: document.getElementById('tog3D').checked });
+
+        document.getElementById('btnUpdateClose').onclick = async () => {
+            await setDoc(closeRef, { section_12: document.getElementById('close12').value, section_04: document.getElementById('close04').value }, { merge: true });
+            Swal.fire("Saved", "ဂဏန်းပိတ်ပြီးပါပြီ", "success");
+        };
+        onSnapshot(collection(db, "users"), (s) => {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = "";
+            s.forEach(d => { tbody.innerHTML += `<tr><td>${d.data().name}</td><td>${d.data().phone}</td><td>${d.data().balance.toLocaleString()} Ks</td></tr>`; });
+        });
+    }
+
+    window.loadBets = function(time) {
+        document.getElementById('btn12').classList.toggle('active', time === '12:01 PM');
+        document.getElementById('btn04').classList.toggle('active', time === '04:30 PM');
+        const queryTimes = (time === '12:01 PM') ? ['12:01 PM'] : ['04:30 PM', '04:31 PM'];
+        const q = query(collection(db, "bets"), where("time", "in", queryTimes), where("date", "==", getTodayStr()));
+        onSnapshot(q, (s) => {
+            const tbody = document.getElementById('betTableBody');
+            tbody.innerHTML = "";
+            if (s.empty) { tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>ယနေ့အတွက် စာရင်းမရှိသေးပါ။</td></tr>"; return; }
+            s.forEach(d => {
+                const b = d.data();
+                const items = b.items.map(i => `${i.num}(${i.amt})`).join(", ");
+                tbody.innerHTML += `<tr><td>${b.phone}</td><td style="color:var(--accent)">${items}</td><td>${b.total.toLocaleString()}</td></tr>`;
+            });
+        });
+    };
+
+    window.processPayout = async function(time) {
+        const winNum = time === '12:01 PM' ? document.getElementById('winNum12').value : document.getElementById('winNum04').value;
+        if(!winNum || winNum.length !== 2) return Swal.fire("ပေါက်ဂဏန်းမှန်ကန်စွာရိုက်ပါ");
+        const today = getTodayStr();
+        const confirm = await Swal.fire({ title: 'အတည်ပြုပါ', text: `ယနေ့ (${today})၊ ${time} အတွက် [ ${winNum} ] ဖြင့် အလျော်ပေးမည်လား?`, icon: 'warning', showCancelButton: true });
+        if(!confirm.isConfirmed) return;
+        Swal.fire({ title: 'တွက်ချက်နေသည်...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        try {
+            const q = query(collection(db, "bets"), where("time", "==", time), where("date", "==", today));
+            const snap = await getDocs(q);
+            if (snap.empty) { Swal.fire("စာရင်းမရှိပါ", "ယနေ့အတွက် အဆိုပါအချိန်တွင် ထိုးထားသောစာရင်းမရှိပါ။", "info"); return; }
+            for (const betDoc of snap.docs) {
+                const data = betDoc.data();
+                let winAmt = 0;
+                let isWinner = false;
+                data.items.forEach(item => { if (item.num === winNum) { winAmt += (item.amt * 85); isWinner = true; }});
+                if (winAmt > 0) await updateDoc(doc(db, "users", data.uid), { balance: increment(winAmt) });
+                await addDoc(collection(db, "user_history"), { uid: data.uid, phone: data.phone, date: today, time: data.time, winNum: winNum, payout: winAmt, items: data.items, status: isWinner ? "Win" : "Lose", timestamp: serverTimestamp() });
+                await deleteDoc(doc(db, "bets", betDoc.id));
+            }
+            Swal.fire("အောင်မြင်သည်", "အလျော်ပေးပြီး စာရင်းရှင်းပြီးပါပြီ", "success");
+            if(time === '12:01 PM') document.getElementById('winNum12').value = ""; else document.getElementById('winNum04').value = "";
+        } catch (e) { Swal.fire("Error", e.message, "error"); }
+    };
+
+    // 3D Payout Logic အသစ် (၇၄၀ ဆ)
+    window.processPayout3D = async () => {
+        const start = document.getElementById('startDate3D').value;
+        const end = document.getElementById('endDate3D').value;
+        const winNum = document.getElementById('winNum3D').value;
+
+        if(!start || !end || !winNum || winNum.length !== 3) {
+            return Swal.fire("သတိ", "ရက်စွဲနှင့် 3D ဂဏန်း (၃ လုံး) ကို မှန်ကန်စွာ ဖြည့်ပါ", "warning");
+        }
+
+        try {
+            Swal.fire({ title: '3D စာရင်းစစ်နေသည်...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+            
+            const q = query(collection(db, "bets"), where("type", "==", "3D"));
+            const snap = await getDocs(q);
+            
+            let winCount = 0;
+            let processed = 0;
+
+            for (const betDoc of snap.docs) {
+                const data = betDoc.data();
+                // ရက်စွဲ စစ်ဆေးခြင်း
+                if (data.date >= start && data.date <= end) {
+                    processed++;
+                    let totalPayout = 0;
+                    let isWinner = false;
+                    data.items.forEach(item => {
+                        if (item.num === winNum) {
+                            totalPayout += (item.amt * 740);
+                            isWinner = true;
+                        }
+                    });
+
+                    if (totalPayout > 0) {
+                        await updateDoc(doc(db, "users", data.uid), { balance: increment(totalPayout) });
+                        winCount++;
+                    }
+
+                    await addDoc(collection(db, "user_history"), {
+                        uid: data.uid, phone: data.phone, items: data.items, total: data.total, payout: totalPayout,
+                        winNum: winNum, status: isWinner ? "Win" : "Lose", time: "3D Section", date: data.date, timestamp: serverTimestamp()
+                    });
+                    
+                    await deleteDoc(doc(db, "bets", betDoc.id));
+                }
+            }
+            Swal.fire("ပြီးမြောက်ပါပြီ", `စုစုပေါင်း (${processed}) စောင် စစ်ဆေးခဲ့ပြီး ပေါက်သူ (${winCount}) ဦးကို အလျော်ပေးပြီးပါပြီ။`, "success");
+            document.getElementById('winNum3D').value = "";
+        } catch (e) { Swal.fire("Error", e.message, "error"); }
+    };
+
+    let targetUid = null;
+    document.getElementById('btnSearch').onclick = async () => {
+        const q = query(collection(db, "users"), where("phone", "==", document.getElementById('searchPhone').value));
+        const res = await getDocs(q);
+        res.forEach(d => { targetUid = d.id; document.getElementById('resName').innerText = "အမည်: " + d.data().name; document.getElementById('resBalance').innerText = d.data().balance.toLocaleString(); document.getElementById('userInfo').style.display = 'block'; });
+    };
+    window.changeBal = async (type) => {
+        const amt = parseInt(document.getElementById('amount').value);
+        if(!amt || !targetUid) return;
+        await updateDoc(doc(db, "users", targetUid), { balance: increment(type === 'add' ? amt : -amt) });
+        document.getElementById('btnSearch').click();
+        Swal.fire("Success");
+            };
+    document.getElementById('btnAdd').onclick = () => changeBal('add');
+    document.getElementById('btnSub').onclick = () => changeBal('sub');
+    window.adminLogout = () => { sessionStorage.clear(); location.reload(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Bet Confirm</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --red: #ff3b30; --gold: #ffcc00; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 30px; }
+        .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
+        .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
+        .container { padding: 15px; }
+        
+        /* User Info Box from bet_confirm */
+        .user-info { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; border: 1px solid rgba(255,255,255,0.1); }
+        
+        table { width: 100%; background: var(--bg-card); border-radius: 10px; overflow: hidden; border-collapse: collapse; }
+        th { background: rgba(0,123,255,0.1); padding: 12px; text-align: left; font-size: 14px; color: var(--accent-blue); }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .price-input { width: 90px; background: #001f3f; border: 1px solid var(--accent-blue); color: white; padding: 5px; border-radius: 5px; text-align: center; }
+        .r-btn { border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        
+        /* Modal Style */
+        #rModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--bg-card); width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--accent-blue); }
+        .r-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .r-item { padding: 10px; background: #001f3f; border: 1px solid var(--accent-blue); border-radius: 8px; cursor: pointer; }
+        .r-item.selected { background: var(--accent-blue); }
+
+        .footer-action { position: fixed; bottom: 0; left: 0; width: 100%; background: #001a35; padding: 15px; border-top: 1px solid rgba(0,123,255,0.3); display: flex; justify-content: space-between; align-items: center; }
+        .total-box { font-size: 16px; font-weight: bold; }
+        .submit-btn { background: var(--accent-blue); color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .submit-btn:disabled { background: #555; cursor: not-allowed; }
+
+        /* Success Popup from bet_confirm */
+        #pop { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="threed.html" class="back-btn"><i class="fa-solid fa-chevron-left"></i></a>
+        <div class="header-title">3D စာရင်းအတည်ပြုရန်</div>
+    </div>
+
+    <div class="container">
+        <div class="user-info">
+            <span>လက်ကျန်ငွေ</span>
+            <span style="color: var(--gold); font-weight: bold;"><span id="uBal">0</span> Ks</span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ဂဏန်း</th>
+                    <th>R (ခွေ)</th>
+                    <th>ပမာဏ</th>
+                    <th>ဖျက်</th>
+                </tr>
+            </thead>
+            <tbody id="betTable"></tbody>
+        </table>
+    </div>
+
+    <div id="rModal">
+        <div class="modal-content">
+            <h3 style="color: var(--gold);">R မည့်ဂဏန်းများကိုရွေးပါ</h3>
+            <div class="r-grid" id="rGrid"></div>
+            <button class="submit-btn" onclick="addRNumbers()">ပေါင်းထည့်မည်</button>
+            <button class="submit-btn" style="background:#444; margin-left:10px;" onclick="closeRModal()">ပိတ်မည်</button>
+        </div>
+    </div>
+
+    <div class="footer-action">
+        <div class="total-box">စုစုပေါင်း: <span id="totalDisplay" style="color: var(--gold);">0</span> Ks</div>
+        <button class="submit-btn" id="submitBtn" onclick="submitBet()">ထိုးမည်</button>
+    </div>
+
+    <div id="pop">
+        <i class="fa-solid fa-circle-check" style="font-size: 60px; color: #52c41a; margin-bottom: 20px;"></i>
+        <h2>ထိုးခြင်းအောင်မြင်သည်</h2>
+        <button onclick="finish()" style="margin-top:30px; padding:10px 40px; border-radius:20px; border:none; background:var(--accent-blue); color:white; font-weight: bold;">ပိတ်မည်</button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, updateDoc, addDoc, collection, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    let currentUser = null;
+    let is3DOpen = true;
+    let tempBetData = JSON.parse(localStorage.getItem('tempBet')) || { nums: [], price: 500 };
+    let selectedRNums = [];
+
+    // User Data & Auth Listener (bet_confirm style)
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            onSnapshot(doc(db, "users", user.uid), (s) => {
+                if (s.exists()) document.getElementById('uBal').innerText = s.data().balance.toLocaleString();
+            });
+        } else { window.location.href = "auth.html"; }
+    });
+
+    // Real-time Status Control
+    onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
+        if (docSnap.exists()) {
+            is3DOpen = docSnap.data().section_3d;
+            const btn = document.getElementById('submitBtn');
+            if (!is3DOpen) {
+                btn.disabled = true;
+                btn.innerText = "ပိတ်ထားပါသည်";
+                Swal.fire({ title: "အချိန်ပြည့်ပါပြီ", text: "3D ပိတ်လိုက်ပြီဖြစ်သောကြောင့် ပင်မစာမျက်နှာသို့ ပြန်ပို့ပါမည်။", icon: "warning", timer: 2000, showConfirmButton: false });
+                setTimeout(() => { window.location.href = "index.html"; }, 2000);
+            }
+        }
+    });
+
+    // R Permutation Logic
+    function getPermutations(str) {
+        if (str.length <= 1) return [str];
+        let perms = [];
+        for (let i = 0; i < str.length; i++) {
+            let char = str[i];
+            let remaining = str.slice(0, i) + str.slice(i + 1);
+            for (let p of getPermutations(remaining)) perms.push(char + p);
+        }
+        return [...new Set(perms)];
+    }
+
+    window.openRModal = (num) => {
+        const perms = getPermutations(num).filter(n => !tempBetData.nums.includes(n));
+        if(perms.length === 0) return Swal.fire("သတိ", "ပတ်လည်ဂဏန်းများ ရှိနှင့်ပြီးသားဖြစ်သည်", "info");
+        selectedRNums = [];
+        const grid = document.getElementById('rGrid');
+        grid.innerHTML = "";
+        perms.forEach(p => {
+            const div = document.createElement('div');
+            div.className = "r-item"; div.innerText = p;
+            div.onclick = () => {
+                div.classList.toggle('selected');
+                if(selectedRNums.includes(p)) selectedRNums = selectedRNums.filter(x => x !== p);
+                else selectedRNums.push(p);
+            };
+            grid.appendChild(div);
+        });
+        document.getElementById('rModal').style.display = "flex";
+    }
+
+    window.addRNumbers = () => {
+        tempBetData.nums = [...tempBetData.nums, ...selectedRNums];
+        localStorage.setItem('tempBet', JSON.stringify(tempBetData));
+        renderTable(); closeRModal();
+    }
+    window.closeRModal = () => document.getElementById('rModal').style.display = "none";
+
+    function renderTable() {
+        const tbody = document.getElementById('betTable');
+        tbody.innerHTML = "";
+        tempBetData.nums.forEach((n, idx) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:bold; color:var(--accent-blue);">${n}</td>
+                    <td><button class="r-btn" onclick="openRModal('${n}')">R</button></td>
+                    <td><input type="number" class="price-input" data-index="${idx}" value="${tempBetData.price}" oninput="updateTotal()"></td>
+                    <td><i class="fa-solid fa-trash" style="color:var(--red); cursor:pointer;" onclick="removeNum(${idx})"></i></td>
+                </tr>
+            `;
+        });
+        updateTotal();
+    }
+
+    window.updateTotal = () => {
+        let total = 0;
+        document.querySelectorAll('.price-input').forEach(input => total += parseInt(input.value || 0));
+        document.getElementById('totalDisplay').innerText = total.toLocaleString();
+    };
+
+    window.removeNum = (idx) => {
+        tempBetData.nums.splice(idx, 1);
+        localStorage.setItem('tempBet', JSON.stringify(tempBetData));
+        renderTable();
+    };
+
+    window.submitBet = async () => {
+        if (!is3DOpen) return Swal.fire("အမှား", "ထိုးချိန်ပြည့်သွားပါပြီ။", "error");
+
+        const total = parseInt(document.getElementById('totalDisplay').innerText.replace(/,/g, ''));
+        const curBal = parseInt(document.getElementById('uBal').innerText.replace(/,/g, ''));
+
+        // Validation Limits
+        let isValid = true;
+        const finalItems = [];
+        document.querySelectorAll('.price-input').forEach((input, idx) => {
+            const val = parseInt(input.value);
+            if(val < 100 || val > 1000000) isValid = false;
+            finalItems.push({ num: tempBetData.nums[idx], amt: val });
+        });
+
+        if(!isValid) return Swal.fire("အမှား", "အနည်းဆုံး ၁၀၀ ကျပ်မှ ၁၀ သိန်းအတွင်းသာ ထိုးနိုင်ပါသည်။", "error");
+        if (total > curBal) return Swal.fire("အမှား", "လက်ကျန်ငွေမလုံလောက်ပါ", "error");
+
+        try {
+            document.getElementById('submitBtn').disabled = true;
+            const d = new Date();
+            const todayStr = `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
+
+            // 1. Deduct Balance
+            await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total) });
+            
+            // 2. Add to Bets Collection
+            await addDoc(collection(db, "bets"), {
+                uid: currentUser.uid,
+                phone: currentUser.email.split('@')[0],
+                items: finalItems,
+                total: total,
+                time: "3D Section",
+                type: "3D",
+                date: todayStr,
+                timestamp: serverTimestamp()
+            });
+
+            document.getElementById('pop').style.display = 'flex';
+        } catch (err) {
+            Swal.fire("Error", err.message, "error");
+            document.getElementById('submitBtn').disabled = false;
+        }
+    };
+
+    window.finish = function() { 
+        localStorage.removeItem('tempBet'); 
+        window.location.href = "two_history.html"; 
+    };
+
+    renderTable();
+</script>
+</body>
+</html>

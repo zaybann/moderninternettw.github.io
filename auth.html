@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMK 2D - Login/Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --btn-blue: linear-gradient(135deg, #0062ff, #003db3); }
+        body { background-color: var(--bg-dark); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        #auth-loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 31, 63, 0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .auth-card { background: var(--bg-card); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(0,123,255,0.1); }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo i { font-size: 50px; color: var(--accent-blue); margin-bottom: 10px; }
+        .logo h1 { font-size: 24px; color: var(--white); margin: 0; letter-spacing: 1px; }
+
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--accent-blue); }
+        .input-group input { width: 100%; padding: 12px 15px 12px 45px; background: rgba(0, 31, 63, 0.5); border: 1px solid rgba(0,123,255,0.2); border-radius: 12px; color: white; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .input-group input:focus { border-color: var(--accent-blue); box-shadow: 0 0 10px rgba(0,123,255,0.2); }
+
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--btn-blue); color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn:active { transform: scale(0.98); }
+
+        .toggle-link { text-align: center; margin-top: 20px; color: #a6adb4; font-size: 14px; }
+        .toggle-link span { color: var(--accent-blue); cursor: pointer; font-weight: bold; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-loading">
+        <div class="spinner"></div>
+        <p style="color: white; margin-top: 15px;">ခဏစောင့်ပေးပါ...</p>
+    </div>
+
+    <div class="container">
+        <div class="auth-card" id="loginForm">
+            <div class="logo">
+                <i class="fas fa-user-circle"></i>
+                <h1>MMK 2D LOGIN</h1>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="text" id="lPhone" placeholder="ဖုန်းနံပါတ်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="lPass" placeholder="စကားဝှက်">
+            </div>
+            <button class="btn" id="btnLogin">ဝင်ရောက်မည်</button>
+            <div class="toggle-link">
+                အကောင့်မရှိသေးပါက <span onclick="showPage('reg')">ဒီမှာဖွင့်ပါ</span>
+            </div>
+        </div>
+
+        <div class="auth-card hidden" id="regForm">
+            <div class="logo">
+                <i class="fas fa-user-plus"></i>
+                <h1>REGISTER</h1>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="rName" placeholder="အမည်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="text" id="rPhone" placeholder="ဖုန်းနံပါတ်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="rPass" placeholder="စကားဝှက်အသစ်">
+            </div>
+            <button class="btn" id="btnReg">အကောင့်ဖွင့်မည်</button>
+            <div class="toggle-link">
+                အကောင့်ရှိပြီးသားဆိုပါက <span onclick="showPage('login')">ဒီမှာဝင်ပါ</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+            authDomain: "twod-aa6c1.firebaseapp.com",
+            projectId: "twod-aa6c1",
+            storageBucket: "twod-aa6c1.appspot.com",
+            messagingSenderId: "674076613631",
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const loading = document.getElementById('auth-loading');
+
+        const formatEmail = (p) => p + "@mmk2d.com";
+
+        document.getElementById('btnReg').addEventListener('click', async () => {
+            const name = document.getElementById('rName').value, 
+                  phone = document.getElementById('rPhone').value, 
+                  pass = document.getElementById('rPass').value;
+            
+            if(!name || !phone || !pass) return Swal.fire("သတိ", "အချက်အလက်အပြည့်အစုံဖြည့်ပါ", "warning");
+            loading.style.display = 'flex';
+            try {
+                // အကောင့်ဖွင့်ခြင်း (အောင်မြင်ပါက firebase က auto-login ပေးပြီးသားဖြစ်သည်)
+                const cred = await createUserWithEmailAndPassword(auth, formatEmail(phone), pass);
+                
+                // Firestore ထဲသို့ User Data သိမ်းခြင်း
+                await setDoc(doc(db, "users", cred.user.uid), { 
+                    name: name, 
+                    phone: phone, 
+                    password: pass, 
+                    balance: 0, 
+                    createdAt: new Date() 
+                });
+
+                // အောင်မြင်ကြောင်းပြပြီး တိုက်ရိုက် Login ဝင်သွားစေရန် index.html သို့ ပို့ပေးပါသည်
+                Swal.fire({
+                    icon: 'success',
+                    title: 'အောင်မြင်သည်',
+                    text: 'အကောင့်ဖွင့်ခြင်းအောင်မြင်ပါသည်။ အလိုအလျောက် ဝင်ရောက်နေပါသည်...',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.href = "index.html";
+                });
+
+            } catch (e) { 
+                Swal.fire("မအောင်မြင်ပါ", "ဖုန်းနံပါတ်ရှိပြီးသား ဖြစ်နိုင်သည် သို့မဟုတ် အင်တာနက်ချိတ်ဆက်မှု စစ်ဆေးပါ", "error"); 
+            }
+            loading.style.display = 'none';
+        });
+
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const phone = document.getElementById('lPhone').value, pass = document.getElementById('lPass').value;
+            if(!phone || !pass) return Swal.fire("သတိ", "ဖြည့်စွက်ပါ", "warning");
+            loading.style.display = 'flex';
+            try {
+                await signInWithEmailAndPassword(auth, formatEmail(phone), pass);
+                window.location.href = "index.html";
+            } catch (e) { Swal.fire("မှားယွင်းသည်", "ဖုန်းနံပါတ် (သို့) စကားဝှက် မှားနေသည်", "error"); }
+            loading.style.display = 'none';
+        });
+    </script>
+    <script>
+        function showPage(p) {
+            document.getElementById('loginForm').classList.toggle('hidden', p === 'reg');
+            document.getElementById('regForm').classList.toggle('hidden', p === 'login');
+        }
+    </script>
+</body>
+</html>

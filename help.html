@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - သစ္စာရှင် 2D</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #001f3f;
+            --bg-card: #003366;
+            --accent-blue: #007bff;
+            --white: #ffffff;
+            --text-dim: #a6adb4;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .help-card {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .help-card i.main-icon {
+            font-size: 60px;
+            color: var(--accent-blue);
+            margin-bottom: 20px;
+        }
+
+        .help-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+        }
+
+        .help-card p {
+            font-size: 14px;
+            color: var(--text-dim);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .contact-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn-contact {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 15px;
+            border-radius: 15px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .btn-viber {
+            background: #7360f2; /* Viber Color */
+        }
+
+        .btn-telegram {
+            background: #0088cc; /* Telegram Color */
+        }
+
+        .btn-contact:active {
+            transform: scale(0.95);
+        }
+
+        .btn-contact i {
+            font-size: 20px;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 25px;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .back-link:hover {
+            color: var(--white);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="help-card">
+            <i class="fas fa-headset main-icon"></i>
+            <h2>အကူအညီရယူရန်</h2>
+            <p>ငွေသွင်း/ငွေထုတ် နှင့် အခြားအခက်အခဲများရှိပါက <br>အောက်ပါ Social App များမှ ဆက်သွယ်နိုင်ပါသည်။</p>
+
+            <div class="contact-btns">
+                <a href="viber://chat?number=%2b959123456789" class="btn-contact btn-viber">
+                    <i class="fab fa-viber"></i> Viber နှင့် ဆက်သွယ်ရန်
+                </a>
+
+                <a href="https://t.me/yourusername" class="btn-contact btn-telegram">
+                    <i class="fab fa-telegram-plane"></i> Telegram နှင့် ဆက်သွယ်ရန်
+                </a>
+            </div>
+
+            <a href="index.html" class="back-link">
+                <i class="fas fa-arrow-left"></i> ပင်မစာမျက်နှာသို့ ပြန်မည်
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

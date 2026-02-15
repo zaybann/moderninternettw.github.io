@@ -30,6 +30,38 @@
         .toggle-link { text-align: center; margin-top: 20px; color: #a6adb4; font-size: 14px; }
         .toggle-link span { color: var(--accent-blue); cursor: pointer; font-weight: bold; }
         .hidden { display: none; }
+        
+        .deposit-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3); /* Blue Gradient */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    width: 100%; /* လိုအပ်သလို အတိုးအလျှော့လုပ်နိုင်သည် */
+    margin: 10px 0;
+}
+
+/* ခလုတ်ပေါ် Mouse တင်လိုက်ရင် ဖြစ်မယ့်ပုံစံ */
+.deposit-btn:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+/* ခလုတ်ကို နှိပ်လိုက်တဲ့အချိန် (Click) */
+.deposit-btn:active {
+    transform: scale(0.95);
+}
+
     </style>
 </head>
 <body>
@@ -57,6 +89,7 @@
             <div class="toggle-link">
                 အကောင့်မရှိသေးပါက <span onclick="showPage('reg')">ဒီမှာဖွင့်ပါ</span>
             </div>
+            <button class="deposit-btn" onclick="window.location.href='help.html'">စကားဝှက်မေ့နေပါသလား?</button>
         </div>
 
         <div class="auth-card hidden" id="regForm">
@@ -80,7 +113,6 @@
             <div class="toggle-link">
                 အကောင့်ရှိပြီးသားဆိုပါက <span onclick="showPage('login')">ဒီမှာဝင်ပါ</span>
             </div>
-        </div>
     </div>
 
     <script type="module">

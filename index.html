@@ -3,191 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>သစ္စာရှင် 2D - Blue Edition</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Animated Background Countdown</title>
     <style>
-        :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --btn-blue: linear-gradient(135deg, #0062ff, #003db3); }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 75px; }
+        :root {
+            --bg-color: #0f172a;
+            --accent-color: #38bdf8;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-primary: #f8fafc;
+        }
 
-        #page-loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { width: 50px; height: 50px; border: 5px solid rgba(0, 123, 255, 0.2); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', 'Pyidaungsu', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Canvas ကြောင့် Scroll မဖြစ်စေရန် */
+            position: relative;
+        }
 
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: linear-gradient(to bottom, #002d5a, #001f3f); border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .logo { font-size: 24px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0,123,255,0.5); }
-        .user-balance { text-align: right; font-size: 13px; }
-        .deposit-btn { background: linear-gradient(to bottom, #00aaff, #007bff); border: none; padding: 7px 18px; border-radius: 20px; font-weight: bold; color: white; cursor: pointer; }
-         .promo-banner img {
+        /* Animated Background Canvas */
+        #animated-bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-radius: 12px;
-            border: 1px solid rgba(0,123,255,0.4);
-            display: block;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.4);}
-        .marquee-box { display: flex; align-items: center; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; font-size: 13px; color: #b3d9ff; }
-        .game-grid { display: grid; grid-template-columns: 2fr 2fr; gap: 12px; padding: 15px; }
-        .game-card { position: relative; background: var(--bg-card); border-radius: 15px; overflow: hidden; aspect-ratio: 1.2 / 1; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
-        .game-card img { width: 100%; height: 100%; object-fit: cover; }
-        .game-title { position: absolute; bottom: 0; width: 100%; text-align: center; padding: 10px 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); font-size: 14px; }
-        
-        .footer-nav { position: fixed; bottom: 0; width: 100%; background: #001a35; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(0,123,255,0.3); }
-        .nav-link { text-align: center; color: #7094b8; text-decoration: none; font-size: 11px; }
-        .nav-link i { font-size: 22px; display: block; margin-bottom: 5px; }
-        .active { color: var(--accent-blue); }
-        
-        /* Modal Styles */
-        #sectionModal, #section3DModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: flex-end; }
-        .modal-box { background: #002d5a; width: 100%; padding: 25px 20px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 2px solid var(--accent-blue); animation: slideUp 0.3s; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .section-btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; background: var(--btn-blue); color: white; text-align: center; border-radius: 12px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
+            height: 100%;
+            z-index: 1; /* Countdown အောက်မှာရှိစေရန် */
+        }
+
+        .content {
+            text-align: center;
+            z-index: 2; /* Countdown က Canvas အပေါ်မှာရှိစေရန် */
+            width: 95%;
+            max-width: 500px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.08); /* Glassmorphism effect အတွက် နောက်ခံ */
+            backdrop-filter: blur(15px); /* ပိုပြီး blur လုပ်ပေးလိုက်သည် */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Border အနည်းငယ်ထူပြီး ရှင်းအောင် */
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); /* Shadow ကို ပိုထင်ရှားစေရန် */
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-weight: 300;
+            font-size: 1.5rem; /* စာလုံးအရွယ်အစား အနည်းငယ်ပိုကြီးစေရန် */
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); /* Neon effect ထပ်ထည့် */
+        }
+
+        /* Countdown Grid */
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Box တွေကြား နေရာပိုချဲ့ */
+        }
+
+        .unit-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.4); /* Card Background ကို ပိုမှောင်စေရန် */
+            width: 80px; /* Card အရွယ်အစား အနည်းငယ်ပိုကြီးစေရန် */
+            height: 100px; /* Card အရွယ်အစား အနည်းငယ်ပိုကြီးစေရန် */
+            border-radius: 15px; /* Rounded ပိုဖြစ်စေရန် */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.1); /* Inner shadow ထပ်ထည့် */
+            transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+            border: 2px solid rgba(255,255,255,0.2); /* Border ကို ပိုထင်ရှားစေရန် */
+        }
+
+        .card.bump {
+            animation: bump 0.4s ease-out;
+        }
+
+        @keyframes bump {
+            0% { transform: scale(1); border-color: rgba(255,255,255,0.2); }
+            50% { transform: scale(1.1); border-color: var(--accent-color); }
+            100% { transform: scale(1); border-color: rgba(255,255,255,0.2); }
+        }
+
+        .number {
+            font-size: 2.5rem; /* နံပါတ်အရွယ်အစား ပိုကြီးစေရန် */
+            font-weight: 800; /* ပိုထူစေရန် */
+            color: #ff69b4; /* အရောင်ကို ပိုပြီးဆွဲဆောင်မှုရှိစေရန် (Hot Pink) */
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.7); /* Neon effect */
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px; /* နံပါတ်များကြား အနည်းငယ်ကျဉ်းစေရန် */
+        }
+
+        .label {
+            margin-top: 12px; /* Label နဲ့ နံပါတ်ကြား နေရာပိုချဲ့ */
+            font-size: 0.8rem; /* Label အရွယ်အစား အနည်းငယ်ကြီးစေရန် */
+            opacity: 0.8; /* ပိုထင်ရှားစေရန် */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #a0aec0; /* Label အရောင်ကို နူးညံ့စေရန် */
+        }
+
+        /* Responsive ဖုန်းအတွက် */
+        @media (max-width: 500px) {
+            h1 { font-size: 1.2rem; margin-bottom: 30px; }
+            .card { width: 65px; height: 85px; border-radius: 12px; }
+            .number { font-size: 2rem; }
+            .label { font-size: 0.7rem; }
+            .countdown-container { gap: 10px; }
+            .content { padding: 15px; }
+        }
+
+        @media (max-width: 380px) {
+            .card { width: 55px; height: 75px; }
+            .number { font-size: 1.7rem; }
+            h1 { font-size: 1.1rem; }
+        }
     </style>
 </head>
 <body>
-    <div id="page-loader"><div class="spinner"></div><p style="margin-top: 15px; color: var(--accent-blue);">ဒေတာများ ရယူနေပါသည်...</p></div>
 
-    <header>
-        <div class="logo">သစ္စာရှင် 2D</div>
-        <div class="user-balance">
-            <div id="uName">---</div>
-            <div style="font-weight: bold; color: white;"><span id="uBalance">0</span> <i class="fa-solid fa-circle-dollar-to-slot" style="color: var(--accent-blue); margin-left: 5px;"></i></div>
-        </div>
-        <button class="deposit-btn" onclick="window.location.href='help.html'">အကူအညီ</button>
+    <canvas id="animated-bg-canvas"></canvas>
 
-    </header>
-
-    <div class="promo-banner">
-        <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/IMG_20260214_114528_306.jpg" alt="MMK 2D Promo">
-    </div>
-
-    <div class="marquee-box"><marquee scrollamount="5">🙏 သစ္စာရှင် 2D မှ ကြိုဆိုပါတယ် ။ ယုံကြည်စိတ်ချစွာ ကစားနိုင်ပါပြီ ⚡</marquee></div>
-
-    <main class="game-grid">
-        <div class="game-card" onclick="toggleModal(true)">
-            <div class="game-title">2D ထီ</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/IMG_20260216_122632.png">
-        </div>
-
-        <div class="game-card" onclick="toggle3DModal(true)">
-            <div class="game-title">3D ထီ</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/IMG_20260216_122656.png">
-        </div>
-
-        <div class="game-card" onclick="window.location.href='wallet.html'">
-            <div class="game-title">ငွေသွင်း/ငွေထုတ်</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/Pay.png">
-        </div>
-
-        <div class="game-card" onclick="window.location.href='two_history.html'">
-            <div class="game-title">ထိုးကြေးမှတ်တမ်း</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/List%20History.png">
-        </div>
-
-        <div class="game-card" onclick="window.location.href='transaction_history.html'">
-            <div class="game-title">ငွေသွင်း/ထုတ်မှတ်တမ်း</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/Pay%20history.png">
-        </div>
-    </main>
-
-    <div id="sectionModal" onclick="toggleModal(false)">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 20px;">အချိန်အပိုင်းအခြား ရွေးပါ</h3>
-            <button onclick="goToSection('twod_12.html', 'section_12')" class="section-btn">12:01 section</button>
-            <button onclick="goToSection('twod_04.html', 'section_04')" class="section-btn">04:30 section</button>
+    <div class="content">
+        <h1>သစ္စာရှင် Hosting စတင်နေပါပြီ</h1>
+        <div class="countdown-container">
+            <div class="unit-box">
+                <div class="card" id="card-days"><span class="number" id="days">00</span></div>
+                <span class="label">ရက်</span>
+            </div>
+            <div class="unit-box">
+                <div class="card" id="card-hours"><span class="number" id="hours">00</span></div>
+                <span class="label">နာရီ</span>
+            </div>
+            <div class="unit-box">
+                <div class="card" id="card-minutes"><span class="number" id="minutes">00</span></div>
+                <span class="label">မိနစ်</span>
+            </div>
+            <div class="unit-box">
+                <div class="card" id="card-seconds"><span class="number" id="seconds">00</span></div>
+                <span class="label">စက္ကန့်</span>
+            </div>
         </div>
     </div>
 
-    <div id="section3DModal" onclick="toggle3DModal(false)">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 20px;">3D ထီထိုးခြင်း</h3>
-            <button onclick="goTo3D()" class="section-btn">3D ထိုးမည်</button>
-        </div>
-    </div>
+    <script>
+        // --- Animated Background Canvas Logic ---
+        const canvas = document.getElementById('animated-bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 150; // အမှုန်အရေအတွက် ပိုတိုး
 
-    <nav class="footer-nav">
-        <a href="#" class="nav-link active"><i class="fa-solid fa-house-chimney"></i><div>ပင်မ</div></a>
-        <a href="#" class="nav-link" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i><div>ထွက်ရန်</div></a>
-    </nav>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
-        authDomain: "twod-aa6c1.firebaseapp.com",
-        projectId: "twod-aa6c1",
-        storageBucket: "twod-aa6c1.appspot.com",
-        messagingSenderId: "674076613631",
-        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let sectionStatus = { section_12: true, section_04: true, section_3d: true };
-
-    // Real-time Time Control Listener
-    onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
-        if (docSnap.exists()) sectionStatus = docSnap.data();
-    });
-
-    onAuthStateChanged(auth, (user) => {
-        const loader = document.getElementById('page-loader');
-        if (user) {
-            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('uName').innerText = data.name;
-                    document.getElementById('uBalance').innerText = data.balance.toLocaleString();
-                }
-                loader.style.display = 'none';
-            });
-        } else { window.location.href = "auth.html"; }
-    });
-
-    window.goToSection = (page, name) => {
-        if (sectionStatus[name]) {
-            window.location.href = page;
-        } else {
-            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "ဤအချိန်ပိုင်းအား ခေတ္တပိတ်ထားပါသည်။", icon: "error", confirmButtonColor: "#007bff", background: "#002d5a", color: "#fff" });
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         }
-    };
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-    window.goTo3D = () => {
-        if (sectionStatus.section_3d !== false) {
-            window.location.href = 'threed.html';
-        } else {
-            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။", icon: "error", confirmButtonColor: "#007bff", background: "#002d5a", color: "#fff" });
-        }
-    };
-
-        // Logout confirmation ဖြည့်စွက်ထားသော မူရင်း ကုဒ်အပိုင်း
-    document.getElementById('btnLogout').onclick = () => { 
-        Swal.fire({
-            title: 'အကောင့်ထွက်မှာ သေချာပြီလား?',
-            text: "ပြန်ဝင်လိုပါက ဖုန်းနံပါတ်နှင့် စကားဝှက် ပြန်ရိုက်ရပါမည်။",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#007bff',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'ထွက်မည်',
-            cancelButtonText: 'မထွက်တော့ပါ',
-            background: '#002d5a',
-            color: '#fff'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                signOut(auth).then(() => { 
-                    window.location.href = "auth.html"; 
-                });
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 3 + 1; // အရွယ်အစား အနည်းငယ်ပိုကြီး
+                this.speedX = Math.random() * 0.8 - 0.4; // ပိုပြီး ဖြည်းဖြည်းလေး ရွေ့
+                this.speedY = Math.random() * 0.8 - 0.4;
+                this.color = `hsla(${Math.random() * 360}, 100%, 70%, ${Math.random() * 0.5 + 0.3})`; // အရောင်မျိုးစုံ
             }
-        });
-    };
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
 
-    window.toggleModal = (s) => { document.getElementById('sectionModal').style.display = s ? 'flex' : 'none'; };
-    window.toggle3DModal = (s) => { document.getElementById('section3DModal').style.display = s ? 'flex' : 'none'; };
-</script>
+                // မျက်နှာပြင်ပြင်ပရောက်ရင် ပြန်ပေါ်စေရန်
+                if (this.x > canvas.width + this.size) this.x = -this.size;
+                if (this.x < -this.size) this.x = canvas.width + this.size;
+                if (this.y > canvas.height + this.size) this.y = -this.size;
+                if (this.y < -this.size) this.y = canvas.height + this.size;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // နောက်ခံကို ရှင်း
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.3)'; // မှောင်မဲနေတဲ့ အငွေ့အသက်လေး
+            ctx.fillRect(0, 0, canvas.width, canvas.height); // Background ကို ဖြည်းဖြည်းချင်း ဖျော့
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+
+
+        // --- Countdown Logic ---
+        const targetDate = new Date("Feb 21, 2026 00:00:00").getTime();
+        
+        let lastValues = { days: -1, hours: -1, minutes: -1, seconds: -1 };
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                document.querySelector('.content').innerHTML = "<h1>Welcome! Website is LIVE now!</h1>"; // Live ဖြစ်ရင်ပြမယ့် စာသား
+                return;
+            }
+
+            const current = {
+                days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((diff % (1000 * 60)) / 1000)
+            };
+
+            for (const unit in current) {
+                const element = document.getElementById(unit);
+                const card = document.getElementById(`card-${unit}`);
+                const value = current[unit].toString().padStart(2, '0');
+
+                if (lastValues[unit] !== value) {
+                    element.innerText = value;
+                    card.classList.remove('bump');
+                    void card.offsetWidth; // Force reflow
+                    card.classList.add('bump');
+                    lastValues[unit] = value;
+                }
+            }
+        }
+
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+    </script>
 </body>
 </html>
+

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Our App - MMK 2D</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #001f3f;
+            --bg-card: #003366;
+            --accent-blue: #007bff;
+            --white: #ffffff;
+            --text-dim: #a6adb4;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--white);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .app-card {
+            background: var(--bg-card);
+            padding: 40px 30px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .app-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            border-radius: 22px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .app-logo i {
+            font-size: 50px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .version {
+            font-size: 14px;
+            color: var(--accent-blue);
+            background: rgba(0, 123, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 30px;
+            display: inline-block;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .feature-item i {
+            color: #2ecc71;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            text-decoration: none;
+            padding: 16px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        .download-btn:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="app-card">
+            <div class="app-logo">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            
+            <h1>သစ္စာရှင် 2D App</h1>
+            <span class="version">Version 1.0.2 (Stable)</span>
+
+            <p>ပိုမိုမြန်ဆန် ချောမွေ့တဲ့ အတွေ့အကြုံကို ရယူနိုင်ဖို့ ကျွန်ုပ်တို့ရဲ့ Mobile App ကို အခုပဲ ဒေါင်းလုဒ်ဆွဲလိုက်ပါ။</p>
+
+            <div class="feature-list">
+                <div class="feature-item"><i class="fas fa-check-circle"></i> ဖုန်းထဲမှာတင် တိုက်ရိုက်ကစားနိုင်ခြင်း</div>
+                <div class="feature-item"><i class="fas fa-check-circle"></i> ပိုမိုမြန်ဆန်သော Notification စနစ်</div>
+                <div class="feature-item"><i class="fas fa-check-circle"></i> ဒေတာအသုံးပြုမှု ပိုမိုသက်သာခြင်း</div>
+            </div>
+
+            <a href="mmk_2d_v1.0.2.apk" class="download-btn">
+                <i class="fab fa-android"></i> Download APK
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

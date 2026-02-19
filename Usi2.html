@@ -388,7 +388,7 @@
                 const data = betDoc.data();
                 let winAmt = 0;
                 let isWinner = false;
-                data.items.forEach(item => { if (item.num === winNum) { winAmt += (item.amt * 85); isWinner = true; }});
+                data.items.forEach(item => { if (item.num === winNum) { winAmt += (item.amt * 86); isWinner = true; }});
                 if (winAmt > 0) await updateDoc(doc(db, "users", data.uid), { balance: increment(winAmt) });
                 await addDoc(collection(db, "user_history"), { uid: data.uid, phone: data.phone, date: today, time: data.time, winNum: winNum, payout: winAmt, items: data.items, status: isWinner ? "Win" : "Lose", timestamp: serverTimestamp() });
                 await deleteDoc(doc(db, "bets", betDoc.id));

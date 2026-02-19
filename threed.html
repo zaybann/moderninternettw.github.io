@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Betting Page</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --bg-dark: #001f3f;
+            --bg-card: #003366;
+            --accent-blue: #007bff;
+            --white: #ffffff;
+            --navy-btn: #002d5a;
+            --gold: #ffcc00;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 120px; }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-dark);
+            border-bottom: 1px solid rgba(0,123,255,0.2);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
+        .page-title { flex: 1; text-align: center; color: var(--gold); font-size: 20px; font-weight: bold; }
+
+        /* --- 0-9 Navigation --- */
+        .number-nav {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            gap: 5px;
+        }
+        .nav-item {
+            flex: 1;
+            height: 35px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent-blue);
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .nav-item.active {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
+
+        /* 3D Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 15px;
+        }
+        .num-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0,123,255,0.3);
+            border-radius: 8px;
+            padding: 12px 0;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--white);
+            cursor: pointer;
+        }
+        .num-card.selected {
+            background: var(--accent-blue);
+            border-color: var(--white);
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0; width: 100%;
+            background: var(--bg-dark);
+            padding: 15px;
+            border-top: 1px solid rgba(0,123,255,0.2);
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-clear { background: var(--navy-btn); color: var(--white); }
+        .btn-bet { background: var(--accent-blue); color: white; }
+        .btn-count { background: rgba(255, 255, 255, 0.2); padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <div class="page-title">3D ထီထိုး</div>
+    </div>
+
+    <div class="number-nav" id="numNav"></div>
+
+    <div class="grid-container" id="gridContainer"></div>
+
+    <div class="bottom-bar">
+        <button class="btn btn-clear" onclick="clearAll()"><i class="fas fa-trash"></i> ဖျက်ရန်</button>
+        <button class="btn btn-bet" onclick="confirmBet()">
+            ထိုးမည် <span class="btn-count" id="selected-count">0</span>
+        </button>
+    </div>
+
+    <script>
+        // --- မူရင်း ကုဒ်များ (မူလအတိုင်း) ---
+        const gridContainer = document.getElementById('gridContainer');
+        const numNav = document.getElementById('numNav');
+        const countDisplay = document.getElementById('selected-count');
+        let selectedNumbers = new Set();
+
+        for (let i = 0; i <= 9; i++) {
+            const item = document.createElement('div');
+            item.className = `nav-item ${i === 0 ? 'active' : ''}`;
+            item.innerText = i;
+            item.onclick = () => {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+                generateGrid(i);
+            };
+            numNav.appendChild(item);
+        }
+
+        function generateGrid(prefix) {
+            gridContainer.innerHTML = '';
+            for (let i = 0; i <= 99; i++) {
+                const num = prefix.toString() + i.toString().padStart(2, '0');
+                const card = document.createElement('div');
+                card.className = `num-card ${selectedNumbers.has(num) ? 'selected' : ''}`;
+                card.innerText = num;
+                card.onclick = () => {
+                    if (selectedNumbers.has(num)) {
+                        selectedNumbers.delete(num);
+                        card.classList.remove('selected');
+                    } else {
+                        selectedNumbers.add(num);
+                        card.classList.add('selected');
+                    }
+                    updateUI();
+                };
+                gridContainer.appendChild(card);
+            }
+        }
+
+        function updateUI() {
+            countDisplay.innerText = selectedNumbers.size;
+        }
+
+        function clearAll() {
+            selectedNumbers.clear();
+            updateUI();
+            const activeNav = document.querySelector('.nav-item.active').innerText;
+            generateGrid(activeNav);
+        }
+
+        // မူရင်း confirmBet logic (ပထမဗားရှင်း)
+        function confirmBet() {
+            if (selectedNumbers.size === 0) {
+                Swal.fire({ icon: 'warning', title: 'ဂဏန်းရွေးပါ', background: '#002d5a', color: '#fff' });
+                return;
+            }
+            Swal.fire({
+                title: 'အတည်ပြုပါ',
+                text: `စုစုပေါင်း - ${selectedNumbers.size} ကွက် ထိုးမှာ သေချာပါသလား?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'သေချာသည်',
+                cancelButtonText: 'မလုပ်တော့ပါ',
+                background: '#002d5a',
+                color: '#fff'
+            });
+        }
+
+        generateGrid(0);
+
+        // မူရင်း confirmBet logic (ဒုတိယဗားရှင်း - localStorage သိမ်းဆည်းသည့်အပိုင်း)
+        function confirmBet() {
+            if (selectedNumbers.size === 0) {
+                Swal.fire({ icon: 'warning', title: 'ဂဏန်းရွေးပါ', background: '#002d5a', color: '#fff' });
+                return;
+            }
+
+            const data = { 
+                nums: Array.from(selectedNumbers), 
+                price: 500, 
+                time: "3D Section", 
+                type: "3D" 
+            };
+            localStorage.setItem('tempBet', JSON.stringify(data));
+            window.location.href = "threed_confirm.html";
+        }
+
+        // --- ဖြည့်စွက်ချက်- Admin ပိတ်ဂဏန်းစစ်ဆေးသည့် Logic (မူရင်းကုဒ်ကို မဖျက်ဘဲ Wrapper လုပ်ထားပါသည်) ---
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+            authDomain: "twod-aa6c1.firebaseapp.com",
+            projectId: "twod-aa6c1",
+            storageBucket: "twod-aa6c1.appspot.com",
+            messagingSenderId: "674076613631",
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+        };
+
+        let closedNumbers3D = [];
+
+        import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js").then(mod => {
+            const app = mod.initializeApp(firebaseConfig);
+            import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(fs => {
+                const db = fs.getFirestore(app);
+                fs.onSnapshot(fs.doc(db, "settings", "close_numbers"), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const closedStr = docSnap.data().section_3d || "";
+                        closedNumbers3D = closedStr.split(',').map(n => n.trim());
+                        const activeNavItem = document.querySelector('.nav-item.active');
+                        if (activeNavItem) generateGrid(parseInt(activeNavItem.innerText));
+                    }
+                });
+            });
+        });
+
+        const originalGenerateGrid = window.generateGrid;
+        window.generateGrid = function(prefix) {
+            originalGenerateGrid(prefix);
+            const cards = document.querySelectorAll('.num-card');
+            cards.forEach(card => {
+                if (closedNumbers3D.includes(card.innerText)) {
+                    card.style.backgroundColor = "#ff3b30"; // ပိတ်ဂဏန်းကို အနီရောင်ပြခြင်း
+                    card.style.borderColor = "white";
+                    card.onclick = (e) => {
+                        e.stopPropagation();
+                        Swal.fire({
+                            title: "ဂဏန်းပိတ်ထားပါသည်",
+                            text: card.innerText + " မှာ ပိတ်သွားသောကြောင့် ထိုး၍မရပါ။",
+                            icon: "error",
+                            background: "#002d5a",
+                            color: "#fff"
+                        });
+                    };
+                }
+            });
+        };
+
+        const originalConfirmBet = window.confirmBet;
+        window.confirmBet = function() {
+            const currentSelected = Array.from(selectedNumbers);
+            const foundClosed = currentSelected.filter(n => closedNumbers3D.includes(n));
+
+            if (foundClosed.length > 0) {
+                Swal.fire({
+                    title: "ဂဏန်းပိတ်ထားပါသည်",
+                    text: "ဂဏန်း (" + foundClosed.join(',') + ") များမှာ ပိတ်သွားသောကြောင့် ထိုး၍မရပါ။",
+                    icon: "error",
+                    background: "#002d5a",
+                    color: "#fff"
+                });
+                return; // ပိတ်ဂဏန်းပါက ရှေ့ဆက်မသွားစေရန် တားဆီးခြင်း
+            }
+            originalConfirmBet(); // ပိတ်ဂဏန်းမပါမှ မူရင်း confirmBet ကို အလုပ်လုပ်စေခြင်း
+        };
+
+        setTimeout(() => {
+            const activeNav = document.querySelector('.nav-item.active');
+            if(activeNav) generateGrid(parseInt(activeNav.innerText));
+        }, 1000);
+    </script>
+</body>
+</html>

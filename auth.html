@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>သစ္စာရှင် 2D - Login/Register</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b18; 
+            --bg-card: rgba(0, 51, 102, 0.4); 
+            --accent-blue: #00a2ff; 
+            --white: #ffffff; 
+            --btn-blue: linear-gradient(135deg, #007bff, #0056b3);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            background: radial-gradient(circle at top, #001f3f, #000b18);
+            font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh;
+            color: var(--white);
+            overflow-x: hidden;
+        }
+
+        /* Loading Animation */
+        #auth-loading { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 11, 24, 0.9); z-index: 9999; 
+            flex-direction: column; justify-content: center; align-items: center; 
+            backdrop-filter: blur(8px);
+        }
+        .spinner { 
+            width: 60px; height: 60px; 
+            border: 4px solid rgba(0, 162, 255, 0.1); 
+            border-top: 4px solid var(--accent-blue); 
+            border-radius: 50%; 
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 15px rgba(0, 162, 255, 0.2);
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Container & Card */
+        .container { flex: 1; display: flex; justify-content: center; align-items: center; padding: 25px; }
+        .auth-card { 
+            background: var(--bg-card); 
+            padding: 40px 30px; 
+            border-radius: 30px; 
+            width: 100%; 
+            max-width: 400px; 
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.6s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo { text-align: center; margin-bottom: 35px; }
+        .logo i { 
+            font-size: 60px; 
+            background: linear-gradient(135deg, #fff, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 10px rgba(0, 162, 255, 0.5));
+        }
+        .logo h1 { 
+            font-size: 22px; 
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Input Fields */
+        .input-group { margin-bottom: 22px; position: relative; }
+        .input-group i { 
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%); 
+            color: var(--accent-blue); font-size: 18px;
+        }
+        .input-group input { 
+            width: 100%; padding: 15px 15px 15px 52px; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 16px; color: white; outline: none; 
+            transition: 0.3s; box-sizing: border-box; 
+            font-size: 15px;
+        }
+        .input-group input:focus { 
+            border-color: var(--accent-blue); 
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 162, 255, 0.2);
+        }
+
+        /* Buttons */
+        .btn { 
+            width: 100%; padding: 16px; border: none; border-radius: 16px; 
+            background: var(--btn-blue); color: white; font-weight: bold; 
+            font-size: 17px; cursor: pointer; transition: 0.3s; margin-top: 10px; 
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+        }
+        .btn:active { transform: scale(0.96); }
+
+        .toggle-link { text-align: center; margin-top: 25px; color: #a6adb4; font-size: 14px; }
+        .toggle-link span { color: var(--accent-blue); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .hidden { display: none; }
+        
+        .deposit-btn {
+            background: transparent;
+            color: #7094b8;
+            border: 1px solid var(--glass-border);
+            padding: 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+        .deposit-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-loading">
+        <div class="spinner"></div>
+        <p style="color: var(--accent-blue); margin-top: 20px; letter-spacing: 1px;">ခေတ္တစောင့်ဆိုင်းပေးပါ...</p>
+    </div>
+
+    <div class="container">
+        <div class="auth-card" id="loginForm">
+            <div class="logo">
+                <i class="fas fa-shield-halved"></i>
+                <h1>သစ္စာရှင် 2D ဝင်ရန်</h1>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="text" id="lPhone" placeholder="ဖုန်းနံပါတ်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="lPass" placeholder="စကားဝှက်">
+            </div>
+            <button class="btn" id="btnLogin">ဝင်ရောက်မည်</button>
+            <div class="toggle-link">
+                အကောင့်မရှိသေးပါက <span onclick="showPage('reg')">ဒီမှာအသစ်ဖွင့်ပါ</span>
+            </div>
+            <button class="deposit-btn" onclick="window.location.href='help.html'"><i class="fa-solid fa-key"></i> စကားဝှက်မေ့နေပါသလား?</button>
+        </div>
+
+        <div class="auth-card hidden" id="regForm">
+            <div class="logo">
+                <i class="fas fa-user-plus"></i>
+                <h1>အကောင့်ဖွင့်မည်</h1>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="rName" placeholder="အမည်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-phone"></i>
+                <input type="text" id="rPhone" placeholder="ဖုန်းနံပါတ်">
+            </div>
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="rPass" placeholder="စကားဝှက်အသစ်">
+            </div>
+            <button class="btn" id="btnReg">အကောင့်ဖွင့်မည်</button>
+            <div class="toggle-link">
+                အကောင့်ရှိပြီးသားဆိုပါက <span onclick="showPage('login')">ဒီမှာပြန်ဝင်ပါ</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // မူရင်း Firebase Code များအားလုံး မပြောင်းလဲဘဲ ထိန်းသိမ်းထားပါသည်
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+            authDomain: "twod-aa6c1.firebaseapp.com",
+            projectId: "twod-aa6c1",
+            storageBucket: "twod-aa6c1.appspot.com",
+            messagingSenderId: "674076613631",
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const loading = document.getElementById('auth-loading');
+
+        const formatEmail = (p) => p + "@mmk2d.com";
+
+        document.getElementById('btnReg').addEventListener('click', async () => {
+            const name = document.getElementById('rName').value, 
+                  phone = document.getElementById('rPhone').value, 
+                  pass = document.getElementById('rPass').value;
+            
+            if(!name || !phone || !pass) return Swal.fire("သတိ", "အချက်အလက်အပြည့်အစုံဖြည့်ပါ", "warning");
+            loading.style.display = 'flex';
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, formatEmail(phone), pass);
+                await setDoc(doc(db, "users", cred.user.uid), { 
+                    name: name, 
+                    phone: phone, 
+                    password: pass, 
+                    balance: 0, 
+                    createdAt: new Date() 
+                });
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'အောင်မြင်သည်',
+                    text: 'အကောင့်ဖွင့်ခြင်းအောင်မြင်ပါသည်။ အလိုအလျောက် ဝင်ရောက်နေပါသည်...',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    background: '#002d5a',
+                    color: '#fff'
+                }).then(() => {
+                    window.location.href = "index.html";
+                });
+
+            } catch (e) { 
+                Swal.fire({ title: "မအောင်မြင်ပါ", text: "ဖုန်းနံပါတ်ရှိပြီးသား ဖြစ်နိုင်သည် သို့မဟုတ် အင်တာနက်စစ်ဆေးပါ", icon: "error", background: '#002d5a', color: '#fff' }); 
+            }
+            loading.style.display = 'none';
+        });
+
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const phone = document.getElementById('lPhone').value, pass = document.getElementById('lPass').value;
+            if(!phone || !pass) return Swal.fire("သတိ", "ဖြည့်စွက်ပါ", "warning");
+            loading.style.display = 'flex';
+            try {
+                await signInWithEmailAndPassword(auth, formatEmail(phone), pass);
+                window.location.href = "index.html";
+            } catch (e) { Swal.fire({ title: "မှားယွင်းသည်", text: "ဖုန်းနံပါတ် (သို့) စကားဝှက် မှားနေသည်", icon: "error", background: '#002d5a', color: '#fff' }); }
+            loading.style.display = 'none';
+        });
+    </script>
+    <script>
+        function showPage(p) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('regForm');
+            if(p === 'reg') {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+            } else {
+                regForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

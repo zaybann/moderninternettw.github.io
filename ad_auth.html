@@ -8,14 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root { 
-            --bg: #f4f7f6;
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --white: #ffffff;
+            --bg-dark: #000b14; 
+            --card-bg: #001e36;
+            --accent: #1890ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+            --danger: #ff4d4f;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pyidaungsu', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        
         body { 
-            background: var(--bg); 
+            background: var(--bg-dark); 
             height: 100vh; 
             display: flex; 
             justify-content: center; 
@@ -23,116 +26,122 @@
             padding: 20px;
         }
 
+        /* Loading Overlay matching Dashboard */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 11, 20, 0.7); display: none; justify-content: center; align-items: center;
+            z-index: 9999; backdrop-filter: blur(8px);
+        }
+        .loader {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-bottom-color: var(--accent); border-radius: 50%;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .login-card {
-            background: var(--white);
+            background: var(--card-bg);
             width: 100%;
-            max-width: 350px;
+            max-width: 400px;
             padding: 40px 30px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
             text-align: center;
         }
 
         .login-card i.main-icon {
             font-size: 50px;
             color: var(--accent);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .login-card h2 {
-            font-size: 22px;
-            color: var(--primary);
-            margin-bottom: 10px;
+            font-size: 20px;
+            color: var(--white);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
         }
 
         .login-card p {
             font-size: 13px;
-            color: #7f8c8d;
+            color: var(--text-dim);
             margin-bottom: 30px;
         }
 
-        .input-group {
-            margin-bottom: 20px;
+        .form-group {
             text-align: left;
+            margin-bottom: 20px;
         }
 
-        .input-group label {
+        .form-group label {
             display: block;
             font-size: 12px;
+            color: var(--text-dim);
             margin-bottom: 8px;
-            color: #34495e;
-            font-weight: bold;
+            margin-left: 5px;
         }
 
-        .input-group input {
+        .form-group input {
             width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
+            padding: 14px 15px;
+            background: rgba(0, 11, 20, 0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
             outline: none;
             transition: 0.3s;
-            font-size: 15px;
         }
 
-        .input-group input:focus {
+        .form-group input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            background: rgba(0, 11, 20, 0.8);
         }
 
         .btn-login {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
+            margin-top: 10px;
         }
 
         .btn-login:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
+            opacity: 0.9;
         }
-
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: none; justify-content: center; align-items: center;
-            z-index: 100;
-        }
-        .spinner {
-            width: 30px; height: 30px; border: 3px solid #eee;
-            border-top-color: var(--accent); border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">
-        <div class="spinner"></div>
+    <div id="loadingScreen">
+        <div class="loader"></div>
     </div>
 
     <div class="login-card">
         <i class="fas fa-user-shield main-icon"></i>
-        <h2>Admin Login</h2>
+        <h2>ADMIN LOGIN</h2>
         <p>စီမံခန့်ခွဲသူအကောင့်ဖြင့် ဝင်ရောက်ပါ</p>
 
         <form id="loginForm">
-            <div class="input-group">
-                <label>အီးမေးလ် (Email)</label>
-                <input type="email" id="email" placeholder="admin@example.com" required>
+            <div class="form-group">
+                <label>အီးမေးလ် (Email Address)</label>
+                <input type="email" id="email" placeholder="example@admin.com" required>
             </div>
 
-            <div class="input-group">
+            <div class="form-group">
                 <label>လျှို့ဝှက်နံပါတ် (Password)</label>
                 <input type="password" id="password" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="btn-login">Login ဝင်မည်</button>
+            <button type="submit" class="btn-login">အကောင့်ဝင်မည်</button>
         </form>
     </div>
 
@@ -140,7 +149,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase Config (သင့် App ရဲ့ Config နဲ့ အစားထိုးပါ)
+        // Dashboard နှင့် တူညီသော Config
         const firebaseConfig = { 
             apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", 
             authDomain: "twod-aa6c1.firebaseapp.com", 
@@ -153,13 +162,13 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // အကယ်၍ Login ဝင်ထားပြီးသားဆိုရင် Dashboard ကို တန်းပို့မယ်
+        // Login ဝင်ထားပြီးသားဖြစ်ပါက Dashboard သို့ တန်းပို့မည်
         onAuthStateChanged(auth, (user) => {
             if (user) window.location.href = "adhome.html";
         });
 
         const loginForm = document.getElementById('loginForm');
-        const loader = document.getElementById('loadingOverlay');
+        const loader = document.getElementById('loadingScreen');
 
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -167,26 +176,28 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
+            // Show Loading
             loader.style.display = 'flex';
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
-                    // Login အောင်မြင်ရင် adhome.html ကိုသွားမယ်
-                    window.location.href = "adhome.html";
+                    // Success - onAuthStateChanged မှ Dashboard သို့ ပို့ပေးလိမ့်မည်
                 })
                 .catch((error) => {
                     loader.style.display = 'none';
                     let errorMsg = "အကောင့်ဝင်ခြင်း မအောင်မြင်ပါ။";
                     
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    if (error.code === 'auth/invalid-credential') {
                         errorMsg = "အီးမေးလ် သို့မဟုတ် လျှို့ဝှက်နံပါတ် မှားယွင်းနေပါသည်။";
                     }
 
                     Swal.fire({
                         icon: 'error',
-                        title: 'မှားယွင်းမှုရှိပါသည်',
+                        title: 'Login Error',
                         text: errorMsg,
-                        confirmButtonColor: '#3498db'
+                        background: '#001e36',
+                        color: '#fff',
+                        confirmButtonColor: '#1890ff'
                     });
                 });
         });

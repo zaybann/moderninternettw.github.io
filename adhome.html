@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg: #f4f7f6; /* အဖြူရောင်ဘက်သွားသော မီးခိုးနုရောင် (နောက်ခံ) */
+            --card: #ffffff;
+            --primary: #2c3e50; /* စာသားအရောင် */
+            --accent: #3498db; /* ခလုတ်အဓိကအရောင် */
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pyidaungsu', sans-serif; }
+        body { background: var(--bg); color: var(--primary); padding: 15px; padding-bottom: 50px; }
+
+        /* Loading Box - Simple & Clean */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .loader-box { text-align: center; }
+        .loader {
+            width: 30px; height: 30px; border: 3px solid #ddd;
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: rotation 0.8s linear infinite; margin: 0 auto 10px;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; margin-bottom: 20px; }
+        .header h2 { font-size: 20px; font-weight: bold; color: var(--primary); }
+        .btn-logout { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+
+        /* Stats Section */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: var(--shadow); text-align: center; }
+        .stat-card h3 { font-size: 18px; margin-bottom: 5px; color: var(--accent); }
+        .stat-card p { font-size: 11px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Menu Titles */
+        .menu-title { font-size: 14px; font-weight: bold; margin: 25px 0 10px 5px; color: #7f8c8d; }
+
+        /* Grid Design */
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        
+        /* Menu Item Style */
+        .menu-item { 
+            background: var(--card); padding: 18px 10px; border-radius: 12px; 
+            text-align: center; text-decoration: none; color: var(--primary); 
+            box-shadow: var(--shadow); transition: 0.2s; display: flex; flex-direction: column; align-items: center;
+        }
+        .menu-item:active { transform: scale(0.97); background: #fdfdfd; }
+        .menu-item i { font-size: 22px; margin-bottom: 8px; color: var(--accent); }
+        .menu-item span { font-size: 12px; font-weight: 500; }
+
+        /* Full Width Item */
+        .full-width { grid-column: span 2; flex-direction: row !important; justify-content: center; gap: 15px; padding: 22px; }
+        .full-width i { margin-bottom: 0; }
+        
+        /* Icons colors for specific items */
+        .icon-green i { color: var(--success); }
+        .icon-orange i { color: #f39c12; }
+        .icon-red i { color: var(--danger); }
+        .icon-purple i { color: #8e44ad; }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <div class="loader"></div>
+            <p style="font-size: 12px; color: #7f8c8d;">ဒေတာများ ဖတ်နေသည်...</p>
+        </div>
+    </div>
+
+    <div class="header">
+        <h2>Admin Panel</h2>
+        <button class="btn-logout" id="btnLogout"><i class="fas fa-power-off"></i> ထွက်မည်</button>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <p>အသုံးပြုသူစုစုပေါင်း</p>
+            <h3 id="totalUsers">0</h3>
+        </div>
+        <div class="stat-card">
+            <p>စုစုပေါင်းလက်ကျန်</p>
+            <h3 id="userTotalBal">0</h3>
+        </div>
+    </div>
+
+    <div class="menu-title">မြန်မာ 2D</div>
+    <div class="menu-grid">
+        <a href="ad_mm2d_payout.html" class="menu-item full-width icon-green">
+            <i class="fas fa-check-circle"></i>
+            <span>2D အလျော်အစားလုပ်ရန်</span>
+        </a>
+        <a href="ad_mm2d_12.html" class="menu-item">
+            <i class="fas fa-clock"></i>
+            <span>12:01 PM ပိတ်ရန်</span>
+        </a>
+        <a href="ad2d.html" class="menu-item icon-orange">
+            <i class="fas fa-clock"></i>
+            <span>04:30 PM ပိတ်ရန်</span>
+        </a>
+    </div>
+
+    <div class="menu-title">မြန်မာ 3D</div>
+    <div class="menu-grid">
+        <a href="ad_mm3d_payout.html" class="menu-item full-width icon-purple">
+            <i class="fas fa-trophy"></i>
+            <span>3D အလျော်အစားလုပ်ရန်</span>
+        </a>
+        <a href="ad3d.html" class="menu-item icon-red" style="grid-column: span 2;">
+            <i class="fas fa-calendar-alt"></i>
+            <span>3D ပိတ်ချိန် နှင့် ဂဏန်းပိတ်</span>
+        </a>
+    </div>
+
+    <div class="menu-title">DUBAI 2D</div>
+    <div class="menu-grid">
+        <a href="ad_dubai_payout.html" class="menu-item full-width">
+            <i class="fas fa-coins"></i>
+            <span>Dubai 2D အလျော်အစား</span>
+        </a>
+        <a href="ad_dubai_11am.html" class="menu-item"><span>11:00 AM</span></a>
+        <a href="ad_dubai_01pm.html" class="menu-item"><span>01:00 PM</span></a>
+        <a href="ad_dubai_03pm.html" class="menu-item"><span>03:00 PM</span></a>
+        <a href="ad_dubai_05pm.html" class="menu-item"><span>05:00 PM</span></a>
+        <a href="ad_dubai_07pm.html" class="menu-item"><span>07:00 PM</span></a>
+        <a href="ad_dubai_09pm.html" class="menu-item"><span>09:00 PM</span></a>
+    </div>
+
+    <div class="menu-title">4D</div>
+    <div class="menu-grid">
+        <a href="ad_4d_payout.html" class="menu-item full-width icon-orange">
+            <i class="fas fa-star"></i>
+            <span>4D အလျော်အစားလုပ်ရန်</span>
+        </a>
+        <a href="ad4d.html" class="menu-item" style="grid-column: span 2;">
+            <i class="fas fa-lock"></i>
+            <span>4D ပိတ်ချိန် နှင့် ဂဏန်းပိတ်</span>
+        </a>
+    </div>
+
+    <div class="menu-title">အထွေထွေစီမံခန့်ခွဲမှု</div>
+    <div class="menu-grid">
+        <a href="aduser.html" class="menu-item">
+            <i class="fas fa-users-cog"></i>
+            <span>User များ ပြင်ရန်</span>
+        </a>
+        <a href="ad_tran_history.html" class="menu-item">
+            <i class="fas fa-list-ul"></i>
+            <span>ငွေသွင်း/ထုတ်</span>
+        </a>
+        <a href="adsettings.html" class="menu-item icon-red" style="grid-column: span 2;">
+            <i class="fas fa-university"></i>
+            <span>ဘဏ်အကောင့်ဖုန်းနံပါတ်များ</span>
+        </a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", 
+            authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", 
+            storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", 
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => { if (!user) window.location.href = "auth.html"; });
+
+        onSnapshot(collection(db, "users"), (snap) => {
+            let total = 0;
+            document.getElementById('totalUsers').innerText = snap.size.toLocaleString();
+            snap.forEach(doc => { total += (doc.data().balance || 0); });
+            document.getElementById('userTotalBal').innerText = total.toLocaleString() + " K";
+            
+            const loader = document.getElementById('loadingScreen');
+            if(loader) {
+                loader.style.opacity = "0";
+                setTimeout(() => { loader.style.display = 'none'; }, 300);
+            }
+        });
+
+        document.getElementById('btnLogout').onclick = () => {
+            signOut(auth).then(() => { window.location.href = "auth.html"; });
+        };
+    </script>
+</body>
+</html>

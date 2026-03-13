@@ -225,7 +225,7 @@
         renderTable();
     };
 
-    window.submitBet = async () => {
+        window.submitBet = async () => {
         if (!is3DOpen) return Swal.fire("အမှား", "ထိုးချိန်ပြည့်သွားပါပြီ။", "error");
 
         const total = parseInt(document.getElementById('totalDisplay').innerText.replace(/,/g, ''));
@@ -243,17 +243,20 @@
         if (total > curBal) return Swal.fire("အမှား", "လက်ကျန်ငွေမလုံလောက်ပါ", "error");
 
         try {
+            // ၁။ ဆာဗာသို့ ဒေတာမပို့မီ Loading Screen ကို ပြန်ဖွင့်မည်
+            document.getElementById('loadingScreen').style.display = 'flex';
             document.getElementById('submitBtn').disabled = true;
+
             const d = new Date();
             const todayStr = `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
 
-            // 1. Deduct Balance
+            // ၂။ Balance နှုတ်ခြင်း (Server Request)
             await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total) });
             
-            // 2. Add to Bets Collection (နာမည်ပါ ထည့်သွင်းထားပါသည်)
+            // ၃။ Bets Collection ထဲသို့ ဒေတာသွင်းခြင်း (Server Request)
             await addDoc(collection(db, "bets"), {
                 uid: currentUser.uid,
-                name: userName, // <--- ဤနေရာတွင် User နာမည် ထည့်လိုက်ပါသည်
+                name: userName, 
                 phone: currentUser.email.split('@')[0],
                 items: finalItems,
                 total: total,
@@ -263,8 +266,13 @@
                 timestamp: serverTimestamp()
             });
 
+            // ၄။ ဆာဗာသို့ ပို့ပြီးသွားပါက Loading ကို ပြန်ပိတ်ပြီး Success Popup ပြမည်
+            hideLoading();
             document.getElementById('pop').style.display = 'flex';
+
         } catch (err) {
+            // အကယ်၍ error တက်ခဲ့လျှင် Loading ပိတ်ပေးရန်
+            hideLoading();
             Swal.fire("Error", err.message, "error");
             document.getElementById('submitBtn').disabled = false;
         }

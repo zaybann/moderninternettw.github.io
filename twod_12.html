@@ -10,6 +10,17 @@
         :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --navy-btn: #002d5a; --red-badge: #ff3b30; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 100px; }
+        
+        /* Loading Screen - Semi Transparent */
+        #loadingScreen {
+            position: fixed; inset: 0;
+            background: rgba(0, 31, 63, 0.7); /* နောက်ခံကို မြင်နေရအောင် */
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader-box { background: var(--bg-card); padding: 20px 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent-blue); }
+        .loader { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent-blue); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); position: sticky; top: 0; z-index: 100; }
         .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
         .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
@@ -28,6 +39,13 @@
     </style>
 </head>
 <body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <span class="loader"></span>
+            <div style="margin-top:10px; font-size:12px;">အချက်အလက်များ ရယူနေပါသည်...</div>
+        </div>
+    </div>
 
     <div class="header">
         <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
@@ -75,6 +93,9 @@
         const grid = document.getElementById('grid');
         const badge = document.getElementById('badge');
 
+        // Loading ပိတ်ရန် function
+        const hideLoading = () => document.getElementById('loadingScreen').style.display = 'none';
+
         // Create Numbers 00-99
         for (let i=0; i<=99; i++) {
             let n = i.toString().padStart(2, '0');
@@ -119,20 +140,21 @@
         window.openModal = function() { if(selected.size > 0) document.getElementById('betModal').style.display = 'flex'; }
         window.closeModal = function() { document.getElementById('betModal').style.display = 'none'; }
 
-        // ဂဏန်းပိတ်စစ်ဆေးပြီး Confirm သွားသည့်အပိုင်း
         window.goToConfirm = async function() {
             const price = document.getElementById('amt').value;
             if (price < 100) return Swal.fire("အမှား", "အနည်းဆုံး ၁၀၀ ကျပ် ထိုးရပါမည်", "error");
 
-            // Admin ပိတ်ဂဏန်းများကို စစ်ဆေးခြင်း
+            document.getElementById('loadingScreen').style.display = 'flex'; // စစ်ဆေးနေစဉ် loading ပြန်ပြ
+
             const closeSnap = await getDoc(doc(db, "settings", "close_numbers"));
             if (closeSnap.exists()) {
-                const closedStr = closeSnap.data().section_12 || ""; // ၁၂:၀၁ အတွက်
+                const closedStr = closeSnap.data().section_12 || "";
                 const closedArr = closedStr.split(',');
                 const currentSelected = Array.from(selected);
                 const found = currentSelected.filter(n => closedArr.includes(n));
 
                 if (found.length > 0) {
+                    hideLoading();
                     Swal.fire({
                         title: "ဂဏန်းပိတ်ထားပါသည်",
                         text: "ဂဏန်း (" + found.join(',') + ") မှာ ပိတ်သွားသောကြောင့် ထိုး၍မရပါ။",
@@ -154,33 +176,33 @@
             window.location.href = "bet_confirm.html";
         }
 
-        // Admin က အချိန်ပိတ်လိုက်လျှင် ကန်ထုတ်မည့်အပိုင်း
+        // Real-time Listeners (ဒေတာရမှ loading ပိတ်မည်)
+        let timeDataReady = false;
+        let closeDataReady = false;
+
+        function checkDataReady() {
+            if(timeDataReady && closeDataReady) hideLoading();
+        }
+
         onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
+            timeDataReady = true;
             if (docSnap.exists() && !docSnap.data().section_12) {
-                Swal.fire({
-                    title: "အချိန်ပြည့်ပါပြီ",
-                    text: "ပင်မစာမျက်နှာသို့ ပြန်သွားပါမည်။",
-                    icon: "warning",
-                    showConfirmButton: false,
-                    timer: 2000,
-                    background: "#002d5a",
-                    color: "#fff"
-                }).then(() => { window.location.href = "index.html"; });
+                window.location.href = "index.html";
             }
+            checkDataReady();
         });
-                // Admin ပိတ်ဂဏန်းများကို အနီရောင်ဖြင့် ပြသရန် ဖြည့်စွက်ချက်
+
         onSnapshot(doc(db, "settings", "close_numbers"), (docSnap) => {
+            closeDataReady = true;
             if (docSnap.exists()) {
                 const closedStr = docSnap.data().section_12 || "";
                 const closedArr = closedStr.split(',').map(n => n.trim());
 
-                // အရင်ရှိနေသော အနီရောင်များကို ဖယ်ရှားခြင်း
                 document.querySelectorAll('.num-box').forEach(box => {
                     box.style.backgroundColor = ""; 
                     box.style.color = "";
                 });
 
-                // ပိတ်ဂဏန်းများကို အနီရောင်ပြောင်းခြင်း
                 closedArr.forEach(num => {
                     const targetBox = document.getElementById('n-' + num);
                     if (targetBox) {
@@ -189,6 +211,7 @@
                     }
                 });
             }
+            checkDataReady();
         });
 
     </script>

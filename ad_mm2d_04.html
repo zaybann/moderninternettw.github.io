@@ -10,7 +10,7 @@
         :root { 
             --bg-dark: #000b14; 
             --card-bg: #001e36;
-            --accent: #ffc107; /* ညနေပိုင်းအတွက် အရောင်အနည်းငယ်ပြောင်းထားပါသည် */
+            --accent: #ffc107; 
             --white: #ffffff; 
             --text-dim: #a6adb4;
             --danger: #ff4d4f;
@@ -25,7 +25,6 @@
 
         .card { background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
         
-        /* Switch UI */
         .switch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -34,7 +33,6 @@
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        /* Number Grid */
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
         .num-box { 
             background: rgba(0,0,0,0.4); min-height: 60px; display: flex; flex-direction: column;
@@ -47,19 +45,16 @@
         .num-box.selected { background: var(--danger) !important; border-color: #fff; }
         .num-box.selected span.amt-label { color: white; }
 
-        /* Action Buttons */
         .footer-btns { display: flex; gap: 10px; margin-top: 20px; }
         .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
         .btn-close { background: var(--danger); }
         .btn-open { background: #444; }
-        .btn:active { transform: scale(0.95); }
 
-        /* Loading Overlay */
         #loadingScreen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 9999;
         }
-        .loader-box { background: #001e36; padding: 25px 40px; border-radius: 15px; text-align: center; border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .loader-box { background: #001e36; padding: 25px 40px; border-radius: 15px; text-align: center; border: 1px solid var(--accent); }
         .loader { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -90,7 +85,7 @@
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="font-size: 14px; color: var(--text-dim);">Live Bet Amounts (ယနေ့)</h3>
+            <h3 style="font-size: 14px; color: var(--text-dim);">Live Bet Amounts (All Time)</h3>
             <span id="totalSheet" style="font-size: 12px; color: var(--accent);">0 Sheets</span>
         </div>
         
@@ -135,7 +130,6 @@
             loadingScreen.style.display = 'none';
         }
 
-        // ၁။ ဂဏန်းကွက်များ တည်ဆောက်ခြင်း
         const grid = document.getElementById('grid');
         for (let i = 0; i <= 99; i++) {
             let n = i.toString().padStart(2, '0');
@@ -157,10 +151,9 @@
             }
         }
 
-        // ၂။ Live Bet Amounts (ယနေ့ + 04:30 PM)
-        const today = new Date();
-        const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
-        const qBets = query(betCol, where("time", "==", "04:30 PM"), where("date", "==", dateStr));
+        // ၂။ Live Bet Amounts (ရက်စွဲ Filter ဖယ်ရှားထားပါသည်)
+        // time == "04:30 PM" ဖြစ်သော bets အားလုံးကို ယူပါမည်
+        const qBets = query(betCol, where("time", "==", "04:30 PM"));
 
         onSnapshot(qBets, (snap) => {
             for(let i=0; i<=99; i++) document.getElementById('amt-' + i.toString().padStart(2, '0')).innerText = "0";
@@ -182,7 +175,6 @@
             hideLoading();
         });
 
-        // ၃။ ပိတ်ဂဏန်းများ status ဖတ်ခြင်း (section_04)
         onSnapshot(closeRef, (s) => {
             if (s.exists()) {
                 const closedArr = (s.data().section_04 || "").split(',').filter(x => x);
@@ -196,12 +188,10 @@
             }
         });
 
-        // ၄။ ပိတ်/ဖွင့် status ဖတ်ခြင်း (section_04)
         onSnapshot(timeRef, (s) => {
             if (s.exists()) document.getElementById('tog04').checked = s.data().section_04;
         });
 
-        // ၅။ Actions with Loading
         document.getElementById('tog04').onchange = async () => {
             showLoading("ပြင်ဆင်နေပါသည်...");
             try {
@@ -243,7 +233,6 @@
                 hideLoading();
             }
         };
-
     </script>
 </body>
 </html>

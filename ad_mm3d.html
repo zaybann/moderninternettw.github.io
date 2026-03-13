@@ -14,17 +14,17 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background: var(--bg-dark); color: var(--white); padding: 12px; padding-bottom: 75px; }
 
-        /* Loading Overlay - စဖွင့်ချင်း ပေါ်နေစေရန် display: flex ပေးထားသည် */
+        /* Loading Overlay */
         #loadingScreen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); display: flex; justify-content: center; 
+            background: rgba(0,0,0,0.75); display: flex; justify-content: center; 
             align-items: center; z-index: 9999;
         }
         .loader-box { background: #001e36; padding: 20px 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent); }
         .loader { width: 25px; height: 25px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Header & Status */
+        /* UI Styles */
         .header { display: flex; align-items: center; margin-bottom: 12px; }
         .back-btn { color: white; text-decoration: none; font-size: 18px; margin-right: 12px; }
         .header h2 { font-size: 17px; color: var(--accent); }
@@ -35,7 +35,6 @@
             margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Switch UI */
         .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
@@ -43,7 +42,6 @@
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(18px); }
 
-        /* Tabs & Grid */
         .nav-tabs { display: flex; overflow-x: auto; gap: 6px; margin-bottom: 8px; padding-bottom: 5px; scrollbar-width: none; }
         .nav-item {
             min-width: 35px; height: 35px; background: var(--card-bg);
@@ -64,7 +62,6 @@
         .num-val { font-weight: bold; font-size: 13px; display: block; }
         .num-amt { font-size: 9px; color: var(--money); display: block; margin-top: 2px; }
 
-        /* Compact Footer */
         .footer-actions {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: #001529; padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1);
@@ -125,7 +122,7 @@
         let closedSet = new Set();
         let currentGroup = 0;
         let betAmounts = {}; 
-        let isFirstLoad = true; // ဒေတာအဝင်ကို စစ်ရန်
+        let isFirstLoad = true;
 
         const loadingScreen = document.getElementById('loadingScreen');
         const loadingText = document.getElementById('loadingText');
@@ -158,10 +155,9 @@
             }
         });
 
-        // ၃။ 'bets' collection ထဲက 'items' ကို ပေါင်းခြင်း
-        const today = new Date();
-        const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
-        const qBets = query(collection(db, "bets"), where("type", "==", "3D"), where("date", "==", dateStr));
+        // ၃။ 'bets' collection ထဲက ဒေတာများကို ပေါင်းခြင်း (ရက်စွဲ Filter ကို ဖျက်လိုက်ပါပြီ)
+        // type == "3D" ဖြစ်တဲ့ ဒေတာအားလုံးကို ယူပါမယ်
+        const qBets = query(collection(db, "bets"), where("type", "==", "3D"));
 
         onSnapshot(qBets, (snap) => {
             betAmounts = {};
@@ -177,12 +173,7 @@
                 });
             });
             renderGrid(currentGroup);
-            
-            // ပထမဆုံးအကြိမ် ဒေတာအကုန်ရလာမှ Loading Box ကို ဖျောက်မည်
-            if(isFirstLoad) {
-                isFirstLoad = false;
-                hideLoading();
-            }
+            if(isFirstLoad) { isFirstLoad = false; hideLoading(); }
         }, (error) => {
             loadingText.innerText = "Error: ဒေတာရယူ၍မရပါ။";
         });
@@ -227,7 +218,7 @@
             }
         }
 
-        // ၆။ သိမ်းဆည်းခြင်း (ဂဏန်းပိတ်ခြင်း)
+        // ၆။ သိမ်းဆည်းခြင်း
         window.saveClosedNumbers = async () => {
             showLoading("ဂဏန်းများ ပိတ်နေပါသည်...");
             const closedString = Array.from(closedSet).sort().join(',');
@@ -253,7 +244,7 @@
             }
         };
 
-        // ၈။ Switch Update Logic
+        // ၈။ Switch
         document.getElementById('tog3D').onchange = async (e) => {
             showLoading("ပြင်ဆင်နေပါသည်...");
             try {

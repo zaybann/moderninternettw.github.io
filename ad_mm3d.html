@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Admin Monitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; --card-bg: #001e36; --accent: #1890ff; 
+            --white: #ffffff; --text-dim: #a6adb4; --danger: #ff4d4f; --money: #52c41a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 12px; padding-bottom: 75px; }
+
+        /* Loading Overlay - စဖွင့်ချင်း ပေါ်နေစေရန် display: flex ပေးထားသည် */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; justify-content: center; 
+            align-items: center; z-index: 9999;
+        }
+        .loader-box { background: #001e36; padding: 20px 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent); }
+        .loader { width: 25px; height: 25px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header & Status */
+        .header { display: flex; align-items: center; margin-bottom: 12px; }
+        .back-btn { color: white; text-decoration: none; font-size: 18px; margin-right: 12px; }
+        .header h2 { font-size: 17px; color: var(--accent); }
+
+        .status-card {
+            background: var(--card-bg); padding: 10px 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Switch UI */
+        .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* Tabs & Grid */
+        .nav-tabs { display: flex; overflow-x: auto; gap: 6px; margin-bottom: 8px; padding-bottom: 5px; scrollbar-width: none; }
+        .nav-item {
+            min-width: 35px; height: 35px; background: var(--card-bg);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); font-size: 13px;
+        }
+        .nav-item.active { background: var(--accent); border-color: var(--accent); }
+
+        .num-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+            max-height: 60vh; overflow-y: auto; padding: 2px;
+        }
+        .num-box {
+            background: var(--card-bg); padding: 8px 2px; text-align: center;
+            border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+        }
+        .num-box.selected { background: var(--danger); border-color: var(--white); }
+        .num-val { font-weight: bold; font-size: 13px; display: block; }
+        .num-amt { font-size: 9px; color: var(--money); display: block; margin-top: 2px; }
+
+        /* Compact Footer */
+        .footer-actions {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: #001529; padding: 10px 15px; display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .btn { flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .save-btn { background: var(--accent); color: white; }
+        .clear-btn { background: #1a1a1a; color: var(--danger); border: 1px solid var(--danger); }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <span class="loader"></span>
+            <div id="loadingText" style="margin-top:8px; font-size:12px; color: white;">ဒေတာများ ရယူနေပါသည်...</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>3D Monitor Control</h2>
+    </div>
+
+    <div class="status-card">
+        <div>
+            <h3 style="font-size: 13px;">3D ထီ ပိတ်/ဖွင့်</h3>
+            <p style="font-size: 11px;" id="statusText">စစ်ဆေးနေဆဲ...</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="tog3D">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="nav-tabs" id="tabContainer"></div>
+    <div class="num-grid" id="numberGrid"></div>
+
+    <div class="footer-actions">
+        <button class="btn clear-btn" onclick="clearAllClosed()"><i class="fas fa-unlock"></i> အကုန်ဖွင့်</button>
+        <button class="btn save-btn" onclick="saveClosedNumbers()"><i class="fas fa-save"></i> ပိတ်မည်</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, collection, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const timeRef = doc(db, "settings", "time_control");
+        const closeRef = doc(db, "settings", "close_numbers");
+
+        let closedSet = new Set();
+        let currentGroup = 0;
+        let betAmounts = {}; 
+        let isFirstLoad = true; // ဒေတာအဝင်ကို စစ်ရန်
+
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingText = document.getElementById('loadingText');
+
+        function showLoading(text) {
+            loadingText.innerText = text || "ခေတ္တစောင့်ပါ...";
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingScreen.style.display = 'none';
+        }
+
+        // ၁။ 3D On/Off Status
+        onSnapshot(timeRef, (s) => {
+            if (s.exists()) {
+                const isChecked = s.data().section_3d;
+                document.getElementById('tog3D').checked = isChecked;
+                document.getElementById('statusText').innerText = isChecked ? "ဖွင့်ထားသည်" : "ပိတ်ထားသည်";
+                document.getElementById('statusText').style.color = isChecked ? "var(--money)" : "var(--danger)";
+            }
+        });
+
+        // ၂။ ပိတ်ဂဏန်းများ ဖတ်ခြင်း
+        onSnapshot(closeRef, (s) => {
+            if (s.exists()) {
+                const data = s.data().section_3d || "";
+                closedSet = new Set(data.split(',').filter(n => n.trim() !== ""));
+                renderGrid(currentGroup);
+            }
+        });
+
+        // ၃။ 'bets' collection ထဲက 'items' ကို ပေါင်းခြင်း
+        const today = new Date();
+        const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
+        const qBets = query(collection(db, "bets"), where("type", "==", "3D"), where("date", "==", dateStr));
+
+        onSnapshot(qBets, (snap) => {
+            betAmounts = {};
+            snap.forEach(d => {
+                const data = d.data();
+                const items = data.items || [];
+                items.forEach(item => {
+                    const num = item.num;
+                    const amt = parseInt(item.amt || 0);
+                    if (num) {
+                        betAmounts[num] = (betAmounts[num] || 0) + amt;
+                    }
+                });
+            });
+            renderGrid(currentGroup);
+            
+            // ပထမဆုံးအကြိမ် ဒေတာအကုန်ရလာမှ Loading Box ကို ဖျောက်မည်
+            if(isFirstLoad) {
+                isFirstLoad = false;
+                hideLoading();
+            }
+        }, (error) => {
+            loadingText.innerText = "Error: ဒေတာရယူ၍မရပါ။";
+        });
+
+        // ၄။ Tabs
+        const tabContainer = document.getElementById('tabContainer');
+        for(let i=0; i<=9; i++) {
+            const tab = document.createElement('div');
+            tab.className = `nav-item ${i===0?'active':''}`;
+            tab.innerText = i;
+            tab.onclick = () => {
+                document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentGroup = i;
+                renderGrid(i);
+            };
+            tabContainer.appendChild(tab);
+        }
+
+        // ၅။ Grid
+        function renderGrid(group) {
+            const grid = document.getElementById('numberGrid');
+            grid.innerHTML = "";
+            const start = group * 100;
+            for(let i=start; i<start+100; i++) {
+                const num = i.toString().padStart(3, '0');
+                const amt = betAmounts[num] || 0;
+                const isClosed = closedSet.has(num);
+
+                const box = document.createElement('div');
+                box.className = `num-box ${isClosed ? 'selected' : ''}`;
+                box.innerHTML = `
+                    <span class="num-val">${num}</span>
+                    <span class="num-amt">${amt > 0 ? amt.toLocaleString() : '0'}</span>
+                `;
+                box.onclick = () => {
+                    if(closedSet.has(num)) closedSet.delete(num);
+                    else closedSet.add(num);
+                    box.classList.toggle('selected');
+                };
+                grid.appendChild(box);
+            }
+        }
+
+        // ၆။ သိမ်းဆည်းခြင်း (ဂဏန်းပိတ်ခြင်း)
+        window.saveClosedNumbers = async () => {
+            showLoading("ဂဏန်းများ ပိတ်နေပါသည်...");
+            const closedString = Array.from(closedSet).sort().join(',');
+            try {
+                await updateDoc(closeRef, { section_3d: closedString });
+                Swal.fire({ icon: 'success', title: 'ဂဏန်းပိတ်ခြင်း အောင်မြင်သည်', timer: 1000, showConfirmButton: false, background: '#001e36', color: '#fff' });
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+            hideLoading();
+        };
+
+        // ၇။ အကုန်ဖွင့်ခြင်း
+        window.clearAllClosed = async () => {
+            const res = await Swal.fire({ title: 'သေချာသလား?', text: "ဂဏန်းအားလုံး ပြန်ဖွင့်မည်", icon: 'warning', showCancelButton: true, confirmButtonText: 'ဖွင့်မည်', background: '#001e36', color: '#fff' });
+            if (res.isConfirmed) {
+                showLoading("ပြန်ဖွင့်နေပါသည်...");
+                try {
+                    await updateDoc(closeRef, { section_3d: "" });
+                    closedSet.clear();
+                    renderGrid(currentGroup);
+                    Swal.fire({ icon: 'success', title: 'ဂဏန်းအားလုံး ဖွင့်လိုက်ပါပြီ', timer: 1000, showConfirmButton: false, background: '#001e36', color: '#fff' });
+                } catch (e) { Swal.fire('Error', e.message, 'error'); }
+                hideLoading();
+            }
+        };
+
+        // ၈။ Switch Update Logic
+        document.getElementById('tog3D').onchange = async (e) => {
+            showLoading("ပြင်ဆင်နေပါသည်...");
+            try {
+                await updateDoc(timeRef, { section_3d: e.target.checked });
+            } catch (e) { alert(e.message); }
+            hideLoading();
+        };
+
+    </script>
+</body>
+</html>

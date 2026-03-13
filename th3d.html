@@ -248,19 +248,25 @@
         window.scrollTo(0,0);
     }
 
-// Modal ဖွင့်/ပိတ် နှင့် အချိန်ပိုင်းအခြားသို့ သွားရန် logic
-window.toggleModal = (s) => { 
-    document.getElementById('sectionModal').style.display = s ? 'flex' : 'none';
-};
+// --- Admin အပိတ်အဖွင့် စစ်ဆေးရန် (ဤအပိုင်းကို အစားထိုးပါ) ---
+let sectionStatus = {};
+
+// Admin ဘက်က timeRef လို့ သုံးထားတဲ့ document နာမည်ကို လှမ်းဖတ်ခြင်း
+onSnapshot(doc(db, "settings", "time_control"), (snapshot) => {
+    if (snapshot.exists()) {
+        sectionStatus = snapshot.data();
+        console.log("3D Status:", sectionStatus.section_3d);
+    }
+});
 
 window.goToSection = (page, sectionKey) => {
-    // index.html ကဲ့သို့ ပိတ်/ဖွင့် status စစ်ဆေးခြင်း
-    if (sectionStatus[sectionKey] !== false) {
+    // sectionStatus.section_3d က true ဖြစ်နေမှ ပေးဝင်မည်
+    if (sectionStatus && sectionStatus[sectionKey] === true) {
         window.location.href = page;
     } else {
         Swal.fire({
             title: "ထိုးချိန်ပြည့်ပါပြီ",
-            text: "ဤအပိုင်းအား ခေတ္တပိတ်ထားပါသည်။",
+            text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။",
             icon: "error",
             confirmButtonColor: "#007bff",
             background: "#002d5a",
@@ -269,11 +275,6 @@ window.goToSection = (page, sectionKey) => {
     }
 };
 
-// Admin status ကို သိမ်းရန် variable
-let sectionStatus = {};
-onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
-    if (snapshot.exists()) { sectionStatus = snapshot.data(); }
-});
 
 
         // --- Home Logic ---

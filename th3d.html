@@ -244,58 +244,7 @@
     }
 
     // --- Time Control & Section Logic ---
-    let sectionStatus = {};
-onSnapshot(doc(db, "settings", "sections"), (doc) => {
-    if (doc.exists()) {
-        sectionStatus = doc.data();
-    }
-});
-
-// ၂။ "၂ လုံး ထိုးမည်" ခလုတ်အား index.html မှ 3D ထီခလုတ် logic အတိုင်း ပြောင်းလဲခြင်း
-
-        // --- Home Logic ---
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                if (docSnap.exists()) {
-                    document.getElementById('userBalance').innerText = `${(docSnap.data().balance || 0).toLocaleString()} ကျပ်`;
-
-                    // --- Loading Screen ပိတ်ရန် ဒီနေရာမှာ ထည့်ပါ ---
-                    const loader = document.getElementById('loadingScreen');
-                    if(lo// ၁။ ဒါက ဒေတာလှမ်းယူတဲ့အပိုင်း (script ထဲမှာ တစ်ခါပဲ ပါဖို့လိုပါတယ်)
-let sectionStatus = {};
-onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
-    if (snapshot.exists()) { 
-        sectionStatus = snapshot.data(); 
-    }
-});
-
-// ၂။ ဒါက သင်မေးတဲ့ ခလုတ်နှိပ်ရင် စစ်ဆေးမယ့်အပိုင်း
-window.goTo2DPlayFrom3D = () => {
-    if (sectionStatus.section_3d !== false) {
-        window.location.href = 'twod_play.html';
-    } else {
-        Swal.fire({ 
-            title: "ထိုးချိန်ပြည့်ပါပြီ", 
-            text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။", 
-            icon: "error", 
-            confirmButtonColor: "#007bff", 
-            background: "#002d5a", 
-            color: "#fff" 
-        });
-    }
-};
-ader) {
-                        loader.style.display = 'none';
-                    }
-                    // ------------------------------------------
-                }
-            });
-        } else {
-            // အကယ်၍ user log in မဝင်ထားရင်လည်း loading ပိတ်ပြီး login page ပို့ပေးဖို့ လိုအပ်နိုင်ပါတယ်
-            window.location.href = 'auth.html';
-        }
-    });
+    
 
 
     // --- Winning List Logic ---
@@ -321,7 +270,37 @@ ader) {
         }
 
         const latest = snap.docs[0].data();
-        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
+        document.getElet sectionStatus = {};
+onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
+    if (snapshot.exists()) { 
+        sectionStatus = snapshot.data(); 
+    }
+});
+
+// "၂ လုံး ထိုးမည်" ကို နှိပ်ရင် အလုပ်လုပ်မယ့် function
+window.goTo2DPlayFrom3D = () => {
+    // 3D ပိတ်/ဖွင့် အရင်စစ်မယ်
+    if (sectionStatus.section_3d !== false) {
+        // ပွင့်နေရင် index.html ရဲ့ အချိန်ရွေးတဲ့ Modal မျိုး ပေါ်လာအောင် လုပ်ရမှာဖြစ်ပေမယ့်
+        // သင်က "3D Section" တစ်ခုတည်းပဲ လိုချင်တာဖြစ်လို့ 
+        // တန်းပြီး 3D ထိုးတဲ့စာမျက်နှာ (သို့မဟုတ်) 3D အချိန်သတ်မှတ်ချက်နဲ့ သွားခိုင်းလို့ရပါတယ်။
+        
+        // အကယ်၍ index.html မှာလို Modal ထဲမှာ 3D Section တစ်ခုတည်းပဲ ပေါ်စေချင်ရင် 
+        // ဒီနေရာမှာ Modal logic ထည့်ရပါမယ်။ ဒါပေမယ့် အလွယ်ဆုံးကတော့ 
+        // 3D play စာမျက်နှာကို တိုက်ရိုက်သွားခိုင်းတာပါပဲ။
+        window.location.href = 'twod_play.html?section=3D%20Section';
+    } else {
+        // ပိတ်ထားရင် SweetAlert ပြမယ်
+        Swal.fire({ 
+            title: "ထိုးချိန်ပြည့်ပါပြီ", 
+            text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။", 
+            icon: "error", 
+            confirmButtonColor: "#007bff", 
+            background: "#002d5a", 
+            color: "#fff" 
+        });
+    }
+};lementById('winNumDisplay').innerText = latest.winNum || "--";
         document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
 
         let batch = [];

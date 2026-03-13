@@ -90,7 +90,7 @@
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="font-size: 14px; color: var(--text-dim);">Live Bet Amounts (ယနေ့)</h3>
+            <h3 style="font-size: 14px; color: var(--text-dim);">Live Bet Amounts (All Time)</h3>
             <span id="totalSheet" style="font-size: 12px; color: var(--accent);">0 Sheets</span>
         </div>
         
@@ -157,10 +157,9 @@
             }
         }
 
-        // ၂။ Live Bet Amounts (ယနေ့ + 12:01 PM)
-        const today = new Date();
-        const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
-        const qBets = query(betCol, where("time", "==", "12:01 PM"), where("date", "==", dateStr));
+        // ၂။ Live Bet Amounts (ရက်စွဲ Filter ကို ဖယ်ရှားထားပါသည်)
+        // time == "12:01 PM" ဖြစ်သော bets အားလုံးကို ယူပါမည်
+        const qBets = query(betCol, where("time", "==", "12:01 PM"));
 
         onSnapshot(qBets, (snap) => {
             for(let i=0; i<=99; i++) document.getElementById('amt-' + i.toString().padStart(2, '0')).innerText = "0";
@@ -201,7 +200,7 @@
             if (s.exists()) document.getElementById('tog12').checked = s.data().section_12;
         });
 
-        // ၅။ Actions with Loading
+        // ၅။ Actions
         document.getElementById('tog12').onchange = async () => {
             showLoading("ပြင်ဆင်နေပါသည်...");
             try {

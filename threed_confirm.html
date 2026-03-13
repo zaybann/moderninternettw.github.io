@@ -10,12 +10,23 @@
         :root { --bg-dark: #001f3f; --bg-card: #003366; --accent-blue: #007bff; --white: #ffffff; --red: #ff3b30; --gold: #ffcc00; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: var(--bg-dark); color: var(--white); padding-bottom: 30px; }
+        
+        /* Loading Screen - Semi Transparent */
+        #loadingScreen {
+            position: fixed; inset: 0;
+            background: rgba(0, 31, 63, 0.7); /* နောက်ခံကို မြင်နေရအောင် transparency ထည့်ထားသည် */
+            display: flex; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader-box { background: var(--bg-card); padding: 20px 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent-blue); }
+        .loader { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent-blue); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .header { display: flex; align-items: center; padding: 15px; background: #001f3f; border-bottom: 1px solid rgba(0,123,255,0.2); }
         .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; }
         .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; }
         .container { padding: 15px; }
         
-        /* User Info Box from bet_confirm */
+        /* User Info Box */
         .user-info { background: var(--bg-card); padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; border: 1px solid rgba(255,255,255,0.1); }
         
         table { width: 100%; background: var(--bg-card); border-radius: 10px; overflow: hidden; border-collapse: collapse; }
@@ -25,7 +36,6 @@
         .price-input { width: 90px; background: #001f3f; border: 1px solid var(--accent-blue); color: white; padding: 5px; border-radius: 5px; text-align: center; }
         .r-btn { border: 1px solid var(--gold); background: transparent; color: var(--gold); padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         
-        /* Modal Style */
         #rModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: var(--bg-card); width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--accent-blue); }
         .r-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
@@ -37,11 +47,17 @@
         .submit-btn { background: var(--accent-blue); color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .submit-btn:disabled { background: #555; cursor: not-allowed; }
 
-        /* Success Popup from bet_confirm */
         #pop { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; flex-direction: column; }
     </style>
 </head>
 <body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <span class="loader"></span>
+            <div style="margin-top:10px; font-size:12px;">အချက်အလက်များ ရယူနေပါသည်...</div>
+        </div>
+    </div>
 
     <div class="header">
         <a href="threed.html" class="back-btn"><i class="fa-solid fa-chevron-left"></i></a>
@@ -89,7 +105,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, updateDoc, addDoc, collection, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, getDoc, updateDoc, addDoc, collection, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -106,16 +122,25 @@
     const auth = getAuth(app);
 
     let currentUser = null;
+    let userName = "Unknown"; // User နာမည်သိမ်းရန်
     let is3DOpen = true;
     let tempBetData = JSON.parse(localStorage.getItem('tempBet')) || { nums: [], price: 500 };
     let selectedRNums = [];
 
-    // User Data & Auth Listener (bet_confirm style)
-    onAuthStateChanged(auth, (user) => {
+    // Loading ပိတ်ရန် function
+    const hideLoading = () => document.getElementById('loadingScreen').style.display = 'none';
+
+    // User Data & Auth Listener
+    onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUser = user;
+            // Balance နဲ့ Name ကို တစ်ခါတည်းဆွဲယူသည်
             onSnapshot(doc(db, "users", user.uid), (s) => {
-                if (s.exists()) document.getElementById('uBal').innerText = s.data().balance.toLocaleString();
+                if (s.exists()) {
+                    document.getElementById('uBal').innerText = s.data().balance.toLocaleString();
+                    userName = s.data().name || "Member"; // Firestore က နာမည်ကို ယူသည်
+                    hideLoading(); // ဒေတာရပြီဆိုမှ Loading ပိတ်မည်
+                }
             });
         } else { window.location.href = "auth.html"; }
     });
@@ -128,13 +153,13 @@
             if (!is3DOpen) {
                 btn.disabled = true;
                 btn.innerText = "ပိတ်ထားပါသည်";
-                Swal.fire({ title: "အချိန်ပြည့်ပါပြီ", text: "3D ပိတ်လိုက်ပြီဖြစ်သောကြောင့် ပင်မစာမျက်နှာသို့ ပြန်ပို့ပါမည်။", icon: "warning", timer: 2000, showConfirmButton: false });
-                setTimeout(() => { window.location.href = "index.html"; }, 2000);
+                // Loading ပြနေစဉ် ပိတ်သွားပါကလည်း loading ပိတ်ရန်
+                hideLoading();
             }
         }
     });
 
-    // R Permutation Logic
+    // Permutation Logic
     function getPermutations(str) {
         if (str.length <= 1) return [str];
         let perms = [];
@@ -206,7 +231,6 @@
         const total = parseInt(document.getElementById('totalDisplay').innerText.replace(/,/g, ''));
         const curBal = parseInt(document.getElementById('uBal').innerText.replace(/,/g, ''));
 
-        // Validation Limits
         let isValid = true;
         const finalItems = [];
         document.querySelectorAll('.price-input').forEach((input, idx) => {
@@ -226,9 +250,10 @@
             // 1. Deduct Balance
             await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-total) });
             
-            // 2. Add to Bets Collection
+            // 2. Add to Bets Collection (နာမည်ပါ ထည့်သွင်းထားပါသည်)
             await addDoc(collection(db, "bets"), {
                 uid: currentUser.uid,
+                name: userName, // <--- ဤနေရာတွင် User နာမည် ထည့်လိုက်ပါသည်
                 phone: currentUser.email.split('@')[0],
                 items: finalItems,
                 total: total,

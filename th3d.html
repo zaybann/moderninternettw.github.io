@@ -284,64 +284,46 @@
     });
 
 
-        // --- Winning List Logic ---
+    // --- Winning List Logic ---
     function maskPhone(phone) {
         let p = phone ? phone.toString() : "09******000";
         return p.substring(0, 3) + "******" + p.slice(-3);
     }
 
-    // Admin Payout လုပ်လိုက်သော collection (3D_winners) ကို ချိတ်ဆက်ခြင်း
-    const winQuery = query(
-        collection(db, "3D_winners"), 
-        where("type", "==", "3D"), 
-        orderBy("timestamp", "desc"), 
-        limit(50)
-    );
+    const winQuery = query(collection(db, "3D_winners"), where("status", "==", "Win"), orderBy("timestamp", "desc"), limit(50));
 
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');
-        const winNumDisplay = document.getElementById('winNumDisplay');
-        const resultMeta = document.getElementById('resultMeta');
-        
         listArea.innerHTML = "";
-        
-        // Podium (Rank 1, 2, 3) များကို Reset ချခြင်း
         [1, 2, 3].forEach(r => {
             const el = document.getElementById(`user-${r}`);
             if(el) el.style.visibility = "hidden";
         });
 
         if (snap.empty) {
-            winNumDisplay.innerText = "--";
-            resultMeta.innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
+            document.getElementById('winNumDisplay').innerText = "--";
+            document.getElementById('resultMeta').innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
             return;
         }
 
-        // နောက်ဆုံးထွက်ထားသော ပေါက်ဂဏန်းနှင့် ရက်စွဲကို ယူခြင်း
         const latest = snap.docs[0].data();
-        winNumDisplay.innerText = latest.winNum || "--";
-        resultMeta.innerText = `${latest.date} (${latest.time})`;
+        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
+        document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
 
-        // နောက်ဆုံးအကြိမ် (Latest Batch) မှာ ပေါက်တဲ့သူတွေကိုပဲ စစ်ထုတ်ပြီး WinAmt အများအနည်း စီမည်
         let batch = [];
         snap.forEach(doc => {
             const d = doc.data();
-            // နောက်ဆုံးပေါက်ဂဏန်း ထွက်ထားတဲ့ အချိန်နဲ့ ရက်စွဲ တူသူများကိုသာ ယူမည်
-            if(d.date === latest.date && d.time === latest.time) {
-                batch.push(d);
-            }
+            if(d.date === latest.date && d.time === latest.time) batch.push(d);
         });
 
-        // နိုင်ငွေ (WinAmt) အများဆုံးသူကို ထိပ်ဆုံးက ထားမည်
-        batch.sort((a, b) => (Number(b.winAmt) || 0) - (Number(a.winAmt) || 0));
+        batch.sort((a, b) => (b.winAmt || 0) - (a.winAmt || 0));
 
         batch.forEach((data, index) => {
             const rank = index + 1;
             const mPhone = maskPhone(data.phone);
-            const winAmt = (Number(data.winAmt) || 0).toLocaleString();
-            const betAmt = (Number(data.betAmt) || 0).toLocaleString();
+            const winAmt = (data.winAmt || 0).toLocaleString();
+            const betAmt = (data.betAmt || 0).toLocaleString();
 
-            // Rank 1, 2, 3 အတွက် Podium မှာပြခြင်း
             if (rank <= 3) {
                 const el = document.getElementById(`user-${rank}`);
                 if(el) {
@@ -351,19 +333,9 @@
                     document.getElementById(`bet-${rank}`).innerText = betAmt;
                     document.getElementById(`win-${rank}`).innerText = winAmt;
                 }
-            } 
-            
-            // Rank 4 နှင့် အထက်ကို ဇယား (List) ထဲတွင် ပြခြင်း
-            listArea.innerHTML += `
-                <div class="list-item">
-                    <div style="text-align:center; color:var(--accent-blue)">${rank}</div>
-                    <div>
-                        <b>${data.name || "User"}</b><br>
-                        <small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small>
-                    </div>
-                    <div style="text-align:right">${betAmt}</div>
-                    <div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div>
-                </div>`;
+            } else {
+                listArea.innerHTML += `<div class="list-item"><div style="text-align:center; color:var(--accent-blue)">${rank}</div><div><b>${data.name || "User"}</b><br><small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small></div><div style="text-align:right">${betAmt}</div><div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div></div>`;
+            }
         });
     });
     

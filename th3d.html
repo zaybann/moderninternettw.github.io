@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Bet - Blue Edition SPA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b18; --bg-card: rgba(0, 51, 102, 0.5); 
+            --accent-blue: #00a2ff; --white: #ffffff; 
+            --btn-blue: linear-gradient(135deg, #007bff, #0056b3);
+            --glass: rgba(255, 255, 255, 0.05);
+            --dim: #a6adb4;
+        }
+        
+        body { margin: 0; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; background: radial-gradient(circle at top, #001f3f, #000b18); color: var(--white); overflow-x: hidden; padding-bottom: 80px; }
+        
+            /* Glassmorphism Loading Overlay */
+    #loadingScreen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 11, 24, 0.4); /* နောက်ခံကို အလင်းဖောက်မြင်ရအောင် */
+        backdrop-filter: blur(8px);       /* နောက်ခံကို ဝါးပစ်တဲ့အပိုင်း */
+        -webkit-backdrop-filter: blur(8px);
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        z-index: 9999;
+    }
+
+    /* Simple Transparent Loading Overlay */
+    #loadingScreen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: transparent; /* နောက်ခံကို လုံးဝအကြည်ထားခြင်း */
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        z-index: 9999;
+        pointer-events: all; /* Loading ပြနေချိန် screen ကို နှိပ်လို့မရအောင် တားထားခြင်း */
+    }
+
+    /* အလယ်က Loading Box သေးသေးလေး */
+    .loader-box {
+        background: #001a35; /* Box ကိုတော့ App အရောင်အမှောင်လေး သုံးထားပါတယ် */
+        padding: 20px 30px;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 162, 255, 0.4);
+        display: flex; flex-direction: column;
+        align-items: center;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5); /* Box လေး ပေါ်လွင်အောင် အရိပ်ထည့်ခြင်း */
+    }
+
+    .loader {
+        width: 30px; height: 30px;
+        border: 3px solid rgba(255,255,255,0.1);
+        border-bottom-color: #00a2ff;
+        border-radius: 50%;
+        animation: rotation 1s linear infinite;
+    }
+
+    @keyframes rotation {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text { 
+        margin-top: 10px; 
+        color: white; 
+        font-size: 12px;
+    }
+
+        /* SPA Pages Handling */
+        .page { display: none; min-height: 100vh; width: 100%; }
+        .page.active { display: block; }
+
+        /* Home Page Styles */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0, 11, 24, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(0, 162, 255, 0.2); }
+        .top-nav h1 { margin: 0; font-size: 18px; color: var(--accent-blue); }
+        .wallet-container { padding: 15px; }
+        .wallet-card { background: linear-gradient(135deg, #003366, #004080); border-radius: 15px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .balance-amt { font-size: 24px; font-weight: bold; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); padding: 15px; gap: 15px; margin: 0 15px; background: var(--bg-card); border-radius: 15px; }
+        .menu-item { text-decoration: none; color: var(--white); display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+        .menu-item i { font-size: 22px; width: 50px; height: 50px; background: var(--glass); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-blue); border: 1px solid rgba(0, 162, 255, 0.3); }
+        .announcement { background: rgba(0, 162, 255, 0.1); margin: 15px; padding: 10px; border-radius: 12px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(0, 162, 255, 0.2); }
+        .promo-banner { padding: 0 15px 15px; }
+        .promo-banner img { width: 100%; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .bottom-btn-container { position: fixed; bottom: 0; left: 0; right: 0; padding: 15px; background: rgba(0, 11, 24, 0.95); border-top: 1px solid rgba(0, 162, 255, 0.2); z-index: 1000; }
+        .play-btn { width: 100%; background: var(--btn-blue); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
+        /* Winning Page Styles */
+        .win-header { background: var(--bg-card); padding: 15px; display: flex; align-items: center; border-bottom: 1px solid var(--glass); position: sticky; top: 0; z-index: 100; }
+        .result-section { text-align: center; padding: 20px 0; background: var(--glass); margin: 15px; border-radius: 15px; }
+        #winNumDisplay { font-size: 65px; font-weight: bold; text-shadow: 0 0 15px var(--accent-blue); margin: 0; }
+        .podium-container { display: flex; justify-content: center; align-items: flex-end; gap: 8px; padding: 50px 10px 15px; max-width: 420px; margin: 0 auto; }
+        .p-item { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .user-box { width: 100%; margin-bottom: 10px; visibility: hidden; }
+        .avatar { width: 45px; height: 45px; background: var(--bg-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue); margin: 0 auto; position: relative; z-index: 2; }
+        .info-card { background: var(--bg-card); padding: 25px 5px 10px; border-radius: 12px; margin-top: -25px; border: 1px solid var(--glass); width: 100%; position: relative; z-index: 1; }
+        .step { width: 100%; color: rgba(255,255,255,0.1); font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+        .step-1 { height: 80px; background: linear-gradient(to top, #004e92, var(--accent-blue)); order: 2; }
+        .step-2 { height: 60px; background: #23395d; order: 1; }
+        .step-3 { height: 45px; background: #1a2a44; order: 3; }
+        .list-container { margin: 15px; border-radius: 15px; overflow: hidden; border: 1px solid var(--glass); padding-bottom: 100px; }
+        .table-header { background: var(--bg-card); color: var(--accent-blue); display: grid; grid-template-columns: 40px 1fr 80px 80px; padding: 12px; font-size: 12px; }
+        .list-item { display: grid; grid-template-columns: 40px 1fr 80px 80px; padding: 15px 10px; border-bottom: 1px solid var(--glass); background: var(--glass); align-items: center; font-size: 13px; }
+
+        /* Selection Modal Styles */
+        #sectionModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; align-items: flex-end; }
+        .modal-box { background: #001a35; width: 100%; padding: 25px 20px; border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 2px solid var(--accent-blue); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .section-btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; background: var(--btn-blue); color: white; text-align: center; border-radius: 12px; font-weight: bold; border: none; font-size: 16px; cursor: pointer; }
+        .close-btn { width: 100%; padding: 10px; margin-top: 5px; background: transparent; color: var(--dim); border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="loader-box">
+        <span class="loader"></span>
+        <div class="loading-text">ခေတ္တစောင့်ပါ...</div>
+    </div>
+</div>
+
+    <div id="homePage" class="page active">
+        <header class="top-nav">
+            <h1>သစ္စာရှင် 2D</h1>
+            <div class="profile-icon"><i class="fas fa-user-circle"></i></div>
+        </header>
+
+        <div class="wallet-container">
+            <div class="wallet-card">
+                <span style="font-size: 13px; color: #80d4ff;">ကျွန်ုပ် ပိုက်ဆံအိတ်</span>
+                <div class="wallet-balance" style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                    <i class="fa-solid fa-circle-dollar-to-slot" style="color: var(--accent-blue); font-size: 22px;"></i>
+                    <span class="balance-amt" id="userBalance">0 ကျပ်</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-grid">
+            <div onclick="navigateTo('winningPage')" class="menu-item">
+                <i class="fas fa-trophy"></i>
+                <span>အနိုင်ရသူ</span>
+            </div>
+            <a href="two_history.html" class="menu-item">
+                <i class="fas fa-history"></i>
+                <span>ထိုးမှတ်တမ်း</span>
+            </a>
+        </div>
+
+        <div class="announcement">
+            <i class="fas fa-bullhorn" style="color: var(--accent-blue);"></i>
+            <marquee scrollamount="5">၁လုံး= 100ဆ, ပုံမှန်ဂဏန်း = 85ဆ(မနက်)/ 85ဆ(ညနေ)</marquee>
+        </div>
+
+        <div class="promo-banner">
+            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/IMG_20260214_114528_306.jpg">
+        </div>
+
+        <div class="bottom-btn-container">
+            <button class="play-btn" onclick="toggleModal(true)">၂လုံး ထိုးမည်</button>
+        </div>
+    </div>
+
+    <div id="winningPage" class="page">
+        <div class="win-header">
+            <div onclick="window.history.back()" style="color:var(--white); width:30px; cursor: pointer;"><i class="fas fa-chevron-left"></i></div>
+            <div style="flex: 1; text-align: center; font-size: 18px; font-weight: bold; color: var(--accent-blue);">အနိုင်ရရှိသူများ</div>
+        </div>
+
+        <div class="result-section">
+            <h1 id="winNumDisplay">--</h1>
+            <div id="resultMeta" style="font-size: 14px; color: var(--accent-blue); font-weight: bold;">ဒေတာများ ရယူနေပါသည်...</div>
+        </div>
+
+        <div class="podium-container">
+            <div class="p-item" style="order:1">
+                <div class="user-box" id="user-2"><div class="avatar"><i class="fas fa-user"></i></div><div class="info-card"><b id="name-2">---</b><br><span id="phone-2" style="font-size:9px; color:var(--accent-blue)">09***</span><div style="font-size:9px; display:flex; justify-content:space-between; margin-top:5px; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px;"><span>ထိုး:</span><span id="bet-2">0</span></div><div style="font-size:9px; color:#52c41a; display:flex; justify-content:space-between; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px; margin-top:2px;"><span>နိုင်:</span><span id="win-2">0</span></div></div></div>
+                <div class="step step-2">2</div>
+            </div>
+            <div class="p-item" style="order:2">
+                <div class="user-box" id="user-1"><div class="avatar" style="border-color:white; width:50px; height:50px;"><i class="fas fa-crown" style="color:gold"></i></div><div class="info-card" style="border:1px solid var(--accent-blue)"><b id="name-1" style="color:var(--accent-blue)">---</b><br><span id="phone-1" style="font-size:9px;">09***</span><div style="font-size:9px; display:flex; justify-content:space-between; margin-top:5px; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px;"><span>ထိုး:</span><span id="bet-1">0</span></div><div style="font-size:9px; color:var(--accent-blue); display:flex; justify-content:space-between; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px; margin-top:2px;"><span>နိုင်:</span><span id="win-1">0</span></div></div></div>
+                <div class="step step-1">1</div>
+            </div>
+            <div class="p-item" style="order:3">
+                <div class="user-box" id="user-3"><div class="avatar"><i class="fas fa-user"></i></div><div class="info-card"><b id="name-3">---</b><br><span id="phone-3" style="font-size:9px; color:var(--accent-blue)">09***</span><div style="font-size:9px; display:flex; justify-content:space-between; margin-top:5px; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px;"><span>ထိုး:</span><span id="bet-3">0</span></div><div style="font-size:9px; color:#52c41a; display:flex; justify-content:space-between; background:rgba(0,0,0,0.2); padding:2px 4px; border-radius:4px; margin-top:2px;"><span>နိုင်:</span><span id="win-3">0</span></div></div></div>
+                <div class="step step-3">3</div>
+            </div>
+        </div>
+
+        <div class="list-container">
+            <div class="table-header"><div>စဉ်</div><div>အမည်/ဖုန်း</div><div style="text-align:right">ထိုးကြေး</div><div style="text-align:right">နိုင်ငွေ</div></div>
+            <div id="winnerList"></div>
+        </div>
+    </div>
+
+    <div id="sectionModal" onclick="toggleModal(false)">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3 style="margin-bottom: 20px; text-align: center; color: white;">အချိန်အပိုင်းအခြား ရွေးပါ</h3>
+            <button onclick="goToSection('twod_12.html', 'section_12')" class="section-btn">12:01 section</button>
+            <button onclick="goToSection('twod_04.html', 'section_04')" class="section-btn">04:30 section</button>
+            <button class="close-btn" onclick="toggleModal(false)">ပိတ်မည်</button>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+        projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+        messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // --- SPA Navigation & Modal State ---
+    window.navigateTo = (pageId) => {
+        history.pushState({ page: pageId }, "", "#" + pageId);
+        showPage(pageId);
+    };
+
+    window.toggleModal = (s) => { 
+        if(s) history.pushState({modal: 'open'}, "", "#select-section");
+        document.getElementById('sectionModal').style.display = s ? 'flex' : 'none'; 
+    };
+
+    window.onpopstate = (event) => {
+        // Modal ပိတ်ခြင်း
+        document.getElementById('sectionModal').style.display = 'none';
+        // Page ပြောင်းခြင်း
+        const pageId = (event.state && event.state.page) ? event.state.page : 'homePage';
+        showPage(pageId);
+    };
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const activePage = document.getElementById(pageId);
+        if(activePage) activePage.classList.add('active');
+        window.scrollTo(0,0);
+    }
+
+    // --- Time Control & Section Logic ---
+    let sectionStatus = { section_12: true, section_04: true };
+
+    onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
+        if (docSnap.exists()) sectionStatus = docSnap.data();
+    });
+
+    window.goToSection = (page, name) => {
+        if (sectionStatus[name]) {
+            window.location.href = page;
+        } else {
+            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "ဤအချိန်အပိုင်းအား ခေတ္တပိတ်ထားပါသည်။", icon: "error", confirmButtonColor: "#007bff", background: "#002d5a", color: "#fff" });
+        }
+    };
+
+        // --- Home Logic ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    document.getElementById('userBalance').innerText = `${(docSnap.data().balance || 0).toLocaleString()} ကျပ်`;
+
+                    // --- Loading Screen ပိတ်ရန် ဒီနေရာမှာ ထည့်ပါ ---
+                    const loader = document.getElementById('loadingScreen');
+                    if(loader) {
+                        loader.style.display = 'none';
+                    }
+                    // ------------------------------------------
+                }
+            });
+        } else {
+            // အကယ်၍ user log in မဝင်ထားရင်လည်း loading ပိတ်ပြီး login page ပို့ပေးဖို့ လိုအပ်နိုင်ပါတယ်
+            window.location.href = 'auth.html';
+        }
+    });
+
+
+    // --- Winning List Logic ---
+    function maskPhone(phone) {
+        let p = phone ? phone.toString() : "09******000";
+        return p.substring(0, 3) + "******" + p.slice(-3);
+    }
+
+    const winQuery = query(collection(db, "3D_winners"), where("status", "==", "Win"), orderBy("timestamp", "desc"), limit(50));
+
+    onSnapshot(winQuery, (snap) => {
+        const listArea = document.getElementById('winnerList');
+        listArea.innerHTML = "";
+        [1, 2, 3].forEach(r => {
+            const el = document.getElementById(`user-${r}`);
+            if(el) el.style.visibility = "hidden";
+        });
+
+        if (snap.empty) {
+            document.getElementById('winNumDisplay').innerText = "--";
+            document.getElementById('resultMeta').innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
+            return;
+        }
+
+        const latest = snap.docs[0].data();
+        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
+        document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
+
+        let batch = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if(d.date === latest.date && d.time === latest.time) batch.push(d);
+        });
+
+        batch.sort((a, b) => (b.winAmt || 0) - (a.winAmt || 0));
+
+        batch.forEach((data, index) => {
+            const rank = index + 1;
+            const mPhone = maskPhone(data.phone);
+            const winAmt = (data.winAmt || 0).toLocaleString();
+            const betAmt = (data.betAmt || 0).toLocaleString();
+
+            if (rank <= 3) {
+                const el = document.getElementById(`user-${rank}`);
+                if(el) {
+                    el.style.visibility = "visible";
+                    document.getElementById(`name-${rank}`).innerText = data.name || "User";
+                    document.getElementById(`phone-${rank}`).innerText = mPhone;
+                    document.getElementById(`bet-${rank}`).innerText = betAmt;
+                    document.getElementById(`win-${rank}`).innerText = winAmt;
+                }
+            } else {
+                listArea.innerHTML += `<div class="list-item"><div style="text-align:center; color:var(--accent-blue)">${rank}</div><div><b>${data.name || "User"}</b><br><small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small></div><div style="text-align:right">${betAmt}</div><div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div></div>`;
+            }
+        });
+    });
+</script>
+</body>
+</html>

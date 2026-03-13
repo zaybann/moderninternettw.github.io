@@ -285,50 +285,65 @@
 
 
     // --- Winning List Logic ---
+    // --- Winning List Logic ---
     function maskPhone(phone) {
         let p = phone ? phone.toString() : "09******000";
         return p.substring(0, 3) + "******" + p.slice(-3);
     }
 
+    // status က "Win" ဖြစ်သူများကိုသာ ဆွဲထုတ်ရန် query တွင် where ထပ်တိုးထားပါသည်
     const winQuery = query(
         collection(db, "3D_winners"), 
         where("type", "==", "3D"), 
+        where("status", "==", "Win"), // "Win" ဖြစ်သူများသာ စစ်ထုတ်မည်
         orderBy("timestamp", "desc"), 
         limit(50)
     );
 
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');
+        const winNumDisplay = document.getElementById('winNumDisplay');
+        const resultMeta = document.getElementById('resultMeta');
+        
         listArea.innerHTML = "";
+        
+        // Podium (Rank 1, 2, 3) များကို Reset ချခြင်း
         [1, 2, 3].forEach(r => {
             const el = document.getElementById(`user-${r}`);
             if(el) el.style.visibility = "hidden";
         });
 
         if (snap.empty) {
-            document.getElementById('winNumDisplay').innerText = "--";
-            document.getElementById('resultMeta').innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
+            winNumDisplay.innerText = "--";
+            resultMeta.innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
             return;
         }
 
+        // နောက်ဆုံးထွက်ထားသော ပေါက်ဂဏန်းနှင့် ရက်စွဲကို ယူခြင်း
         const latest = snap.docs[0].data();
-        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
-        document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
+        winNumDisplay.innerText = latest.winNum || "--";
+        resultMeta.innerText = `${latest.date} (${latest.time})`;
 
+        // နောက်ဆုံးအကြိမ် (Latest Batch) မှာ ပေါက်တဲ့သူတွေကိုပဲ စစ်ထုတ်ပြီး WinAmt အများအနည်း စီမည်
         let batch = [];
         snap.forEach(doc => {
             const d = doc.data();
-            if(d.date === latest.date && d.time === latest.time) batch.push(d);
+            // နောက်ဆုံးပေါက်ဂဏန်း ထွက်ထားတဲ့ အချိန်နဲ့ ရက်စွဲ တူသူများကိုသာ ယူမည်
+            if(d.date === latest.date && d.time === latest.time) {
+                batch.push(d);
+            }
         });
 
-        batch.sort((a, b) => (b.winAmt || 0) - (a.winAmt || 0));
+        // နိုင်ငွေ (WinAmt) အများဆုံးသူကို ထိပ်ဆုံးက ထားမည်
+        batch.sort((a, b) => (Number(b.winAmt) || 0) - (Number(a.winAmt) || 0));
 
         batch.forEach((data, index) => {
             const rank = index + 1;
             const mPhone = maskPhone(data.phone);
-            const winAmt = (data.winAmt || 0).toLocaleString();
-            const betAmt = (data.betAmt || 0).toLocaleString();
+            const winAmt = (Number(data.winAmt) || 0).toLocaleString();
+            const betAmt = (Number(data.betAmt) || 0).toLocaleString();
 
+            // Rank 1, 2, 3 အတွက် Podium မှာပြခြင်း
             if (rank <= 3) {
                 const el = document.getElementById(`user-${rank}`);
                 if(el) {
@@ -338,12 +353,26 @@
                     document.getElementById(`bet-${rank}`).innerText = betAmt;
                     document.getElementById(`win-${rank}`).innerText = winAmt;
                 }
-            } else {
-                listArea.innerHTML += `<div class="list-item"><div style="text-align:center; color:var(--accent-blue)">${rank}</div><div><b>${data.name || "User"}</b><br><small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small></div><div style="text-align:right">${betAmt}</div><div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div></div>`;
+            } 
+            // Rank 4 နှင့် အထက်ကိုသာ အောက်က List ထဲတွင် ပြခြင်း (ထပ်မနေစေရန် else သုံးထားပါသည်)
+            else {
+                listArea.innerHTML += `
+                    <div class="list-item">
+                        <div style="text-align:center; color:var(--accent-blue)">${rank}</div>
+                        <div>
+                            <b>${data.name || "User"}</b><br>
+                            <small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small>
+                        </div>
+                        <div style="text-align:right">${betAmt}</div>
+                        <div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div>
+                    </div>`;
             }
         });
+    }, (err) => {
+        console.error("Query Error:", err);
+        // Index မရှိပါက Console ထဲတွင် Index ဆောက်ရန် Link ပေါ်ပါလိမ့်မည်
     });
-    
+
 </script>
 </body>
 </html>

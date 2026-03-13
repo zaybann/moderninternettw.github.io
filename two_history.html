@@ -66,14 +66,11 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
     let currentUid = null;
-    let userPhone = null;
     let currentView = 'pending';
 
     onAuthStateChanged(auth, (user) => {
         if (user) { 
             currentUid = user.uid;
-            // email ကနေ ဖုန်းနံပါတ်ကို ခွဲယူမယ် (09xxxxxxx)
-            userPhone = user.email.split('@')[0];
             loadHistory(); 
         } else { 
             window.location.href = "login.html"; 
@@ -97,28 +94,21 @@
     async function loadHistory() {
         const container = document.getElementById('history-container');
         container.innerHTML = '<div id="loading"><i class="fas fa-spinner fa-spin"></i> ခေတ္တစောင့်ပါ...</div>';
+        
         try {
             const collName = (currentView === 'pending') ? "bets" : "user_history";
             
-            // ၁။ လုံခြုံရေးအတွက် UID နဲ့ပဲ အဓိကရှာမယ်
-            const q = query(collection(db, collName), where("uid", "==", currentUid));
-            const snap = await getDocs(q);
+            // ၁၂:၀၁ နှင့် ၀၄:၃၀ အချိန်များကိုသာ စစ်ထုတ်ယူမည်
+            const allowedTimes = ["12:01 PM", "04:30 PM"];
+            const q = query(
+                collection(db, collName), 
+                where("uid", "==", currentUid),
+                where("time", "in", allowedTimes) // ဤနေရာတွင် စစ်ထုတ်ထားပါသည်
+            );
             
+            const snap = await getDocs(q);
             let docsArray = [];
             snap.forEach(doc => { docsArray.push({ ...doc.data(), id: doc.id }); });
-
-            // ၂။ အကယ်၍ UID နဲ့ရှာလို့မတွေ့ခဲ့ရင် Phone နံပါတ်နဲ့ ထပ်ရှာမယ် (Data အဟောင်းများအတွက်)
-            if (docsArray.length === 0) {
-                const qPhone = query(collection(db, collName), where("phone", "==", userPhone));
-                const snapPhone = await getDocs(qPhone);
-                snapPhone.forEach(doc => { docsArray.push({ ...doc.data(), id: doc.id }); });
-            }
-
-            container.innerHTML = "";
-            if (docsArray.length === 0) {
-                container.innerHTML = `<div id="loading">မှတ်တမ်းမရှိသေးပါ။</div>`;
-                return;
-            }
 
             // အချိန်အလိုက် Sorting စီခြင်း
             docsArray.sort((a, b) => {
@@ -127,23 +117,20 @@
                 return tB - tA;
             });
 
-                        docsArray.forEach((data) => {
+            container.innerHTML = "";
+            if (docsArray.length === 0) {
+                container.innerHTML = `<div id="loading">သတ်မှတ်ချိန်အတွင်း မှတ်တမ်းမရှိသေးပါ။</div>`;
+                return;
+            }
+
+            docsArray.forEach((data) => {
                 const isFinished = (currentView === 'finished');
                 const status = data.status || "pending";
-                
-                // --- ပြင်ဆင်ချက်အပိုင်း (မူရင်းကို မထိခိုက်စေရန် စစ်ထုတ်ခြင်း) ---
-                // Win သို့မဟုတ် Win (Tote) ဖြစ်လျှင် ပေါက်သည်ဟု သတ်မှတ်မည်
                 const isWin = status.includes("Win"); 
-                
-                // status အရောင် သတ်မှတ်ခြင်း (Win (Tote) အတွက်ပါ အစိမ်းရောင်ဖြစ်စေရန်)
                 const statusClass = isWin ? "Win" : status;
                 
-                // စာသားပြသခြင်း
                 let statusDisplayText = isFinished ? (isWin ? 'ပေါက်သည်' : 'မပေါက်ပါ') : 'စောင့်ဆိုင်းဆဲ';
-                if (status === "Win (Tote)") {
-                    statusDisplayText = "တွပ်ရသည်";
-                }
-                // --------------------------------------------------
+                if (status === "Win (Tote)") statusDisplayText = "တွပ်ရသည်";
 
                 const accentColor = isFinished ? (isWin ? "#52c41a" : "#ff4d4f") : "#eccc68";
                 const itemsText = data.items ? data.items.map(i => `${i.num}(${i.amt})`).join(", ") : "စာရင်းမရှိပါ";
@@ -181,3 +168,4 @@
 </script>
 </body>
 </html>
+

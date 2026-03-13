@@ -290,7 +290,12 @@
         return p.substring(0, 3) + "******" + p.slice(-3);
     }
 
-    const winQuery = query(collection(db, "3D_winners"), where("status", "==", "Win"), orderBy("timestamp", "desc"), limit(50));
+    const winQuery = query(
+        collection(db, "3D_winners"), 
+        where("type", "==", "3D"), 
+        orderBy("timestamp", "desc"), 
+        limit(50)
+    );
 
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');

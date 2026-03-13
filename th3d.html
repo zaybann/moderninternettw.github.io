@@ -252,23 +252,6 @@ onSnapshot(doc(db, "settings", "sections"), (doc) => {
 });
 
 // ၂။ "၂ လုံး ထိုးမည်" ခလုတ်အား index.html မှ 3D ထီခလုတ် logic အတိုင်း ပြောင်းလဲခြင်း
-window.goTo2DPlayFrom3D = () => {
-    // index.html ရှိ 3D ထီ ပိတ်/ဖွင့် စစ်ဆေးသည့် logic
-    if (sectionStatus.section_3d !== false) {
-        // ထိုးခွင့်ရှိပါက twod_play.html သို့ သွားမည် (သင်၏ မူလ logic အတိုင်း)
-        window.location.href = 'twod_play.html';
-    } else {
-        // ပိတ်ထားပါက SweetAlert ပြမည် (index.html မှ ပုံစံအတိုင်း)
-        Swal.fire({ 
-            title: "ထိုးချိန်ပြည့်ပါပြီ", 
-            text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။", 
-            icon: "error", 
-            confirmButtonColor: "#007bff", 
-            background: "#002d5a", 
-            color: "#fff" 
-        });
-    }
-};
 
         // --- Home Logic ---
     onAuthStateChanged(auth, (user) => {
@@ -279,7 +262,30 @@ window.goTo2DPlayFrom3D = () => {
 
                     // --- Loading Screen ပိတ်ရန် ဒီနေရာမှာ ထည့်ပါ ---
                     const loader = document.getElementById('loadingScreen');
-                    if(loader) {
+                    if(lo// ၁။ ဒါက ဒေတာလှမ်းယူတဲ့အပိုင်း (script ထဲမှာ တစ်ခါပဲ ပါဖို့လိုပါတယ်)
+let sectionStatus = {};
+onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
+    if (snapshot.exists()) { 
+        sectionStatus = snapshot.data(); 
+    }
+});
+
+// ၂။ ဒါက သင်မေးတဲ့ ခလုတ်နှိပ်ရင် စစ်ဆေးမယ့်အပိုင်း
+window.goTo2DPlayFrom3D = () => {
+    if (sectionStatus.section_3d !== false) {
+        window.location.href = 'twod_play.html';
+    } else {
+        Swal.fire({ 
+            title: "ထိုးချိန်ပြည့်ပါပြီ", 
+            text: "3D ထီထိုးခြင်းအား ခေတ္တပိတ်ထားပါသည်။", 
+            icon: "error", 
+            confirmButtonColor: "#007bff", 
+            background: "#002d5a", 
+            color: "#fff" 
+        });
+    }
+};
+ader) {
                         loader.style.display = 'none';
                     }
                     // ------------------------------------------

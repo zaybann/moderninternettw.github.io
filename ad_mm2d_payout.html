@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2D Admin - Payout Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; 
+            --card-bg: #001e36;
+            --accent: #1890ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+            --success: #52c41a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 10px; -webkit-tap-highlight-color: transparent; }
+
+        .header { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 10px; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 15px; width: 40px; }
+        
+        .tab-bar { display: flex; gap: 8px; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 12px; }
+        .tab-btn { flex: 1; padding: 12px 5px; border: none; border-radius: 10px; background: transparent; color: var(--text-dim); cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.3s; }
+        .tab-btn.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3); }
+
+        .card { background: var(--card-bg); padding: 15px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; position: relative; }
+        
+        .payout-box { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        input { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; font-size: 1.1rem; text-align: center; outline: none; }
+        .btn-action { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--success); color: white; font-weight: bold; font-size: 1rem; cursor: pointer; }
+
+        /* Table & Loading Style */
+        .table-container { width: 100%; overflow-x: auto; border-radius: 10px; background: rgba(0,0,0,0.1); min-height: 150px; position: relative; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 400px; }
+        th { text-align: left; color: var(--text-dim); padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+        /* Table အတွင်းပြမည့် Loading Box */
+        #tableLoading {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 30, 54, 0.8); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10; border-radius: 10px;
+        }
+        .spinner {
+            width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1);
+            border-bottom-color: var(--accent); border-radius: 50%;
+            animation: rotation 1s linear infinite; margin-bottom: 10px;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>အလျော်အစား Panel</h2>
+    </div>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" id="btn12" onclick="switchSection('12:01 PM')">12:01 PM</button>
+        <button class="tab-btn" id="btn04" onclick="switchSection('04:30 PM')">04:30 PM</button>
+    </div>
+
+    <div class="card">
+        <div class="payout-box">
+            <input type="number" id="winNumInput" placeholder="ထွက်ဂဏန်းရိုက်ပါ" oninput="if(this.value.length>2) this.value=this.value.slice(0,2)">
+            <button class="btn-action" onclick="handlePayout()">အကုန်လျော်မည်</button>
+        </div>
+        
+        <h3 style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 10px;">မလျော်ရသေးသော စာရင်းများ</h3>
+        
+        <div class="table-container">
+            <div id="tableLoading">
+                <div class="spinner"></div>
+                <div style="font-size: 12px;">စာရင်းများ ဆွဲယူနေပါသည်...</div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr><th>ရက်စွဲ</th><th>ဖုန်း</th><th>ဂဏန်း</th><th style="text-align: right;">စုစုပေါင်း</th></tr>
+                </thead>
+                <tbody id="betTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, collection, query, where, getDocs, updateDoc, deleteDoc, addDoc, increment, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentSection = '12:01 PM';
+        let unsubscribe = null;
+
+        window.switchSection = (time) => {
+            currentSection = time;
+            document.getElementById('btn12').classList.toggle('active', time === '12:01 PM');
+            document.getElementById('btn04').classList.toggle('active', time === '04:30 PM');
+            loadBets(time);
+        };
+
+        function loadBets(time) {
+            // Loading ပြန်ပြရန်
+            document.getElementById('tableLoading').style.display = 'flex';
+            const tbody = document.getElementById('betTableBody');
+            tbody.innerHTML = "";
+
+            if (unsubscribe) unsubscribe();
+            const queryTimes = (time === '12:01 PM') ? ['12:01 PM'] : ['04:30 PM', '04:31 PM'];
+            const q = query(collection(db, "bets"), where("time", "in", queryTimes));
+            
+            unsubscribe = onSnapshot(q, (s) => {
+                // ဒေတာရောက်လာပြီဖြစ်၍ Loading ဖျောက်ရန်
+                document.getElementById('tableLoading').style.display = 'none';
+                
+                tbody.innerHTML = s.empty ? "<tr><td colspan='4' style='text-align:center; padding:30px; color:#555;'>စာရင်းမရှိပါ။</td></tr>" : "";
+                s.forEach(d => {
+                    const b = d.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${b.date}</td>
+                            <td>${b.phone}</td>
+                            <td style="color:var(--accent)">${b.items.map(i=>`${i.num}(${i.amt})`).join(", ")}</td>
+                            <td style="text-align:right;">${b.total.toLocaleString()}</td>
+                        </tr>`;
+                });
+            }, (error) => {
+                document.getElementById('tableLoading').style.display = 'none';
+                console.error("Error fetching bets:", error);
+            });
+        }
+
+                window.handlePayout = async function() {
+            const winNum = document.getElementById('winNumInput').value;
+            const time = currentSection;
+
+            if(!winNum || winNum.length !== 2) return Swal.fire("ဂဏန်းမှန်အောင်ရိုက်ပါ");
+
+            const confirm = await Swal.fire({
+                title: 'အတည်ပြုပါ',
+                text: `${time} အတွက် [ ${winNum} ] ဖြင့် အကုန်လျော်မည်လား? (စာရင်းဟောင်းများ အကုန်ပျက်ပါမည်)`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#52c41a',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'လျော်မည်',
+                cancelButtonText: 'မလုပ်တော့ပါ'
+            });
+
+            if(!confirm.isConfirmed) return;
+
+            Swal.fire({ title: 'စာရင်းဟောင်းများ ဖျက်ပြီး တွက်ချက်နေပါသည်...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // --- ၁။ Winner စာရင်းဟောင်းများကို အရင်ဖျက်ထုတ်ခြင်း ---
+                const winnersRef = collection(db, "winners");
+                const oldWinnersSnap = await getDocs(winnersRef);
+                const deletePromises = oldWinnersSnap.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
+
+                // --- ၂။ အလျော်ပေးရန် စာရင်းများကို ဆွဲယူခြင်း ---
+                const q = query(collection(db, "bets"), where("time", "==", time));
+                const snap = await getDocs(q);
+
+                if (snap.empty) {
+                    Swal.fire("စာရင်းမရှိပါ", "လျော်ရန် စာရင်းမရှိတော့ပါ။", "info");
+                    return;
+                }
+
+                let winCount = 0;
+                let totalProcessed = 0;
+
+                for (const betDoc of snap.docs) {
+                    const data = betDoc.data();
+                    let payoutAmt = 0;
+                    let isWinner = false;
+
+                    data.items.forEach(item => {
+                        if (item.num === winNum) {
+                            payoutAmt += (item.amt * 85);
+                            isWinner = true;
+                        }
+                    });
+
+                    if (payoutAmt > 0) {
+                        // User Balance ပေါင်းပေးခြင်း
+                        await updateDoc(doc(db, "users", data.uid), { balance: increment(payoutAmt) });
+                        
+                        // Winner စာရင်းသစ်ထဲ ထည့်ခြင်း
+                        await addDoc(collection(db, "winners"), {
+                            uid: data.uid, name: data.name || "User", phone: data.phone,
+                            betAmt: data.total, winAmt: payoutAmt, winNum: winNum,
+                            status: "Win", date: data.date, time: time, type: "2D",
+                            timestamp: serverTimestamp()
+                        });
+                        winCount++;
+                    }
+
+                    // User History ထဲ မှတ်တမ်းသွင်းခြင်း
+                    await addDoc(collection(db, "user_history"), { 
+                        uid: data.uid, phone: data.phone, date: data.date, time: data.time, 
+                        winNum: winNum, payout: payoutAmt, items: data.items, 
+                        status: isWinner ? "Win" : "Lose", timestamp: serverTimestamp() 
+                    });
+
+                    // bets ထဲမှ ဖျက်ထုတ်ခြင်း
+                    await deleteDoc(betDoc.ref);
+                    totalProcessed++;
+                }
+
+                Swal.fire("အောင်မြင်ပါသည်", `စာရင်းဟောင်းများ ဖျက်ပြီးပါပြီ။ စုစုပေါင်း (${totalProcessed}) စောင်ရှင်းလင်းခဲ့ပြီး ပေါက်သူ (${winCount}) ဦးရှိပါသည်။`, "success");
+                document.getElementById('winNumInput').value = "";
+            } catch (e) {
+                Swal.fire("Error", e.message, "error");
+            }
+        };
+        switchSection('12:01 PM');
+    </script>
+</body>
+</html>

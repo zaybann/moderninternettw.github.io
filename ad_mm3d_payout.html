@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Admin - Payout Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; --card-bg: #001e36; --accent: #1890ff; 
+            --white: #ffffff; --text-dim: #a6adb4; --success: #52c41a; --purple: #722ed1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 10px; -webkit-tap-highlight-color: transparent; }
+
+        .header { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 10px; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 15px; width: 40px; }
+        .header h2 { font-size: 1.1rem; color: var(--purple); }
+
+        .card { background: var(--card-bg); padding: 25px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); text-align: center; margin-bottom: 20px; }
+        
+        label { color: var(--text-dim); display: block; margin-bottom: 12px; font-size: 13px; }
+        input { 
+            width: 100%; max-width: 300px; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(0,0,0,0.2); color: white; font-size: 2rem; outline: none; text-align: center;
+            font-weight: bold; letter-spacing: 8px; margin-bottom: 10px;
+        }
+
+        .btn-action { 
+            width: 100%; padding: 16px; border: none; border-radius: 12px; 
+            background: var(--success); color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(82, 196, 26, 0.2); margin-top: 10px;
+        }
+        .btn-action:active { transform: scale(0.98); opacity: 0.9; }
+
+        /* Table Style */
+        .list-title { font-size: 0.9rem; color: var(--purple); margin: 15px 0 10px 5px; text-align: left; display: flex; align-items: center; gap: 8px; }
+        .table-container { width: 100%; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; }
+        th { background: rgba(114, 46, 209, 0.1); color: var(--purple); text-align: left; padding: 12px 10px; font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--white); vertical-align: middle; }
+        .bet-items { color: var(--accent); font-weight: bold; line-height: 1.4; }
+        .total-amt { color: var(--success); font-weight: bold; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>MM 3D အလျော်အစား (3D Section)</h2>
+    </div>
+
+    <div class="card">
+        <label>3D ပေါက်ဂဏန်းရိုက်ထည့်ပါ</label>
+        <input type="number" id="winNumInput" placeholder="---" oninput="if(this.value.length>3) this.value=this.value.slice(0,3)">
+        <button class="btn-action" onclick="handle3DPayout()">
+            <i class="fas fa-check-double"></i> စာရင်းစစ်ပြီး အကုန်လျော်မည်
+        </button>
+    </div>
+
+    <div class="list-title">
+        <i class="fas fa-list-ul"></i> မလျော်ရသေးသော 3D Section စာရင်းများ
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ဖုန်းနံပါတ်</th>
+                    <th>ဂဏန်း (ထိုးကြေး)</th>
+                    <th style="text-align: right;">စုစုပေါင်း</th>
+                </tr>
+            </thead>
+            <tbody id="betListBody">
+                <tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-dim);">ဒေတာများ ဆွဲယူနေပါသည်...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, collection, query, where, getDocs, updateDoc, deleteDoc, addDoc, increment, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- ၁။ 3D Section မှ Pending စာရင်းများကို Real-time ပြသခြင်း ---
+        function loadPendingBets() {
+            const q = query(collection(db, "bets"), where("type", "==", "3D"), where("time", "==", "3D Section"));
+            
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('betListBody');
+                tbody.innerHTML = "";
+                let hasData = false;
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (!data.status) { 
+                        hasData = true;
+                        const itemsStr = data.items.map(i => `${i.num} (<span style="color:var(--white)">${i.amt}</span>)`).join(", ");
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${data.phone || 'Unknown'}</td>
+                                <td class="bet-items">${itemsStr}</td>
+                                <td class="total-amt">${Number(data.total).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    }
+                });
+
+                if (!hasData) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-dim);">3D Section တွင် လျော်ရန်စာရင်း မရှိပါ။</td></tr>`;
+                }
+            });
+        }
+
+        // --- ၂။ တုတ် (အကွက်ချိန်း) ရှာဖွေသည့် Logic ---
+        const getToteNumbers = (num) => {
+            let results = new Set();
+            let digits = num.split('');
+            const permute = (arr, m = []) => {
+                if (arr.length === 0) { results.add(m.join('')); } 
+                else {
+                    for (let i = 0; i < arr.length; i++) {
+                        let curr = arr.slice();
+                        let next = curr.splice(i, 1);
+                        permute(curr.slice(), m.concat(next));
+                    }
+                }
+            };
+            permute(digits);
+            results.delete(num); 
+            return Array.from(results);
+        };
+
+        // --- ၃။ အလျော်ပေးခြင်း၊ Winner သွင်းခြင်းနှင့် Bet ဖျက်ခြင်း Logic ---
+        window.handle3DPayout = async function() {
+            const winNum = document.getElementById('winNumInput').value;
+            if(!winNum || winNum.length !== 3) return Swal.fire("သတိ", "3D ပေါက်ဂဏန်း (၃ လုံး) ရိုက်ပါ", "warning");
+
+            const toteNumbers = getToteNumbers(winNum);
+            const confirm = await Swal.fire({
+                title: 'အတည်ပြုပါ',
+                text: `[ ${winNum} ] ဖြင့် စာရင်းများကို လျော်ပြီး ဆာဗာမှ ဖျက်ထုတ်မည်လား? (Winner စာရင်းဟောင်းများ အလိုအလျောက် ပျက်ပါမည်)`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#722ed1',
+                confirmButtonText: 'အတည်ပြုသည်',
+                background: '#001e36', color: '#fff'
+            });
+
+            if(!confirm.isConfirmed) return;
+
+            Swal.fire({ title: 'လုပ်ဆောင်နေပါသည်...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // (က) 3D_winners ထဲမှ Data အဟောင်းများကို အကုန်ဖျက်ခြင်း
+                const winnersRef = collection(db, "3D_winners");
+                const oldWinnersSnap = await getDocs(winnersRef);
+                const deletePromises = oldWinnersSnap.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
+
+                // (ခ) 3D Section မှ Pending စာရင်းများကို ဆွဲယူခြင်း
+                const q = query(collection(db, "bets"), where("type", "==", "3D"), where("time", "==", "3D Section"));
+                const snap = await getDocs(q);
+                let winCount = 0;
+                let processedCount = 0;
+
+                for (const betDoc of snap.docs) {
+                    const data = betDoc.data();
+                    if (data.status) continue; 
+
+                    processedCount++;
+                    let totalPayout = 0;
+                    let statusLabel = "Lose";
+
+                    data.items.forEach(item => {
+                        // တိုက်ရိုက်ပေါက် (၇၄၀ ဆ)
+                        if (item.num === winNum) {
+                            totalPayout += (Number(item.amt) * 740);
+                            statusLabel = "Win";
+                        } 
+                        // တုတ်/အကွက်ချိန်းပေါက် (၁၅ ဆ)
+                        else if (toteNumbers.includes(item.num)) {
+                            totalPayout += (Number(item.amt) * 15);
+                            if (statusLabel !== "Win") statusLabel = "Win (Tote)"; 
+                        }
+                    });
+
+                    if (totalPayout > 0) {
+                        // ၁။ User Balance ပေါင်းပေးခြင်း
+                        await updateDoc(doc(db, "users", data.uid), { balance: increment(totalPayout) });
+
+                        // ၂။ Winners စာရင်းသစ်ထဲ ထည့်ခြင်း
+                        await addDoc(collection(db, "3D_winners"), {
+                            uid: data.uid,
+                            name: data.name || "User",
+                            phone: data.phone,
+                            betAmt: data.total,
+                            winAmt: totalPayout,
+                            winNum: winNum,
+                            status: "Win", 
+                            date: data.date || "",
+                            time: "3D Section",
+                            type: "3D",
+                            timestamp: serverTimestamp()
+                        });
+                        winCount++;
+                    }
+
+                    // ၃။ User History ထဲ မှတ်တမ်းသွင်းခြင်း
+                    await addDoc(collection(db, "user_history"), {
+                        uid: data.uid, phone: data.phone, items: data.items, 
+                        total: data.total, payout: totalPayout, winNum: winNum, 
+                        status: statusLabel, type: "3D", date: data.date || '', 
+                        timestamp: serverTimestamp(), time: "3D Section"
+                    });
+                    
+                    // ၄။ bets collection ထဲမှ ဤစာရင်းကို ဖျက်ထုတ်ခြင်း
+                    await deleteDoc(betDoc.ref);
+                }
+
+                Swal.fire("အောင်မြင်ပါသည်", `3D Section မှ စောင်ရေ (${processedCount}) ကို ရှင်းလင်းပြီး ပေါက်သူ (${winCount}) ဦးကို လျော်ပေးပြီးပါပြီ။`, "success");
+                document.getElementById('winNumInput').value = "";
+            } catch (e) { 
+                console.error(e); 
+                Swal.fire("Error", "လုပ်ဆောင်ချက် မအောင်မြင်ပါ။ အင်တာနက် စစ်ဆေးပါ။", "error"); 
+            }
+        };
+
+        loadPendingBets();
+    </script>
+</body>
+</html>

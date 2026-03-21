@@ -238,7 +238,7 @@
     });
 
         // Dubai Winners List (Query filters for Dubai type if needed)
-    const winQuery = query(collection(db, "winners"), where("type", "==", "Dubai"), orderBy("timestamp", "desc"), limit(50));
+    const winQuery = query(collection(db, "winners"), where("type", "==", "Dubai 2D"), orderBy("timestamp", "desc"), limit(50));
     // Note: ensure your admin panel writes "type: Dubai" when results are out.
     // Otherwise, using the standard th2d query if all winners are mixed.
     

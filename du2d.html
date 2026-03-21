@@ -237,61 +237,91 @@
         }
     });
 
-        // Dubai Winners List (မူရင်း code ပုံစံအတိုင်း Dubai 2D အတွက် ပြင်ဆင်ထားခြင်း)
+        // --- Dubai 2D Winning List Logic ---
+    function maskPhone(phone) {
+        let p = phone ? phone.toString() : "09******000";
+        return p.substring(0, 3) + "******" + p.slice(-3);
+    }
+
+    // Admin ဘက်က သွင်းလိုက်တဲ့ status: "Win" နဲ့ Dubai 2D အမျိုးအစားကိုပဲ ဆွဲထုတ်မည်
     const winQuery = query(
         collection(db, "du_winners"), 
-        where("status", "==", "Win"), 
+        where("status", "==", "Win"),
         orderBy("timestamp", "desc"), 
         limit(50)
     );
-    
+
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');
+        const winNumDisplay = document.getElementById('winNumDisplay');
+        const resultMeta = document.getElementById('resultMeta');
+        
         listArea.innerHTML = "";
         
-        // Podium box များကို Reset ချခြင်း
+        // Podium (Rank 1, 2, 3) များကို Reset ချခြင်း
         [1, 2, 3].forEach(r => {
             const el = document.getElementById(`user-${r}`);
             if(el) el.style.visibility = "hidden";
         });
 
         if (snap.empty) {
-            document.getElementById('winNumDisplay').innerText = "--";
-            document.getElementById('resultMeta').innerText = "ဒေတာများ မရှိသေးပါ";
+            if(winNumDisplay) winNumDisplay.innerText = "--";
+            if(resultMeta) resultMeta.innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
             return;
         }
 
-        const latest = snap.docs[0].data();
-        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
-        document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
+        // နောက်ဆုံးထွက်ထားသော ပေါက်ဂဏန်းနှင့် ရက်စွဲကို ယူခြင်း
+        const latestDoc = snap.docs[0].data();
+        if(winNumDisplay) winNumDisplay.innerText = latestDoc.winNum || "--";
+        if(resultMeta) resultMeta.innerText = `${latestDoc.date || ""} (${latestDoc.time || ""})`;
 
-        snap.forEach((doc, index) => {
+        // နောက်ဆုံးအကြိမ် (Latest Batch) မှာ ပေါက်တဲ့သူတွေကိုပဲ စစ်ထုတ်ပြီး WinAmt အများအနည်း စီမည်
+        let batch = [];
+        snap.forEach(doc => {
             const d = doc.data();
+            // နောက်ဆုံးပေါက်ဂဏန်း ထွက်ထားတဲ့ ရက်စွဲ နဲ့ အချိန် (Section) တူသူများကိုသာ ယူမည်
+            if(d.date === latestDoc.date && d.time === latestDoc.time) {
+                batch.push(d);
+            }
+        });
+
+        // နိုင်ငွေ (WinAmt) အများဆုံးသူကို ထိပ်ဆုံးက ထားမည်
+        batch.sort((a, b) => (Number(b.winAmt) || 0) - (Number(a.winAmt) || 0));
+
+        batch.forEach((data, index) => {
             const rank = index + 1;
-            const mPhone = d.phone ? d.phone.substring(0,3) + "****" + d.phone.slice(-3) : "09***";
-            
-            if(rank <= 3) {
+            const mPhone = maskPhone(data.phone);
+            const winAmt = (Number(data.winAmt) || 0).toLocaleString();
+            const betAmt = (Number(data.betAmt) || 0).toLocaleString();
+
+            // Rank 1, 2, 3 အတွက် Podium မှာပြခြင်း
+            if (rank <= 3) {
                 const el = document.getElementById(`user-${rank}`);
                 if(el) {
                     el.style.visibility = "visible";
-                    document.getElementById(`name-${rank}`).innerText = d.name || "User";
-                    document.getElementById(`phone-${rank}`).innerText = mPhone;
-                    document.getElementById(`bet-${rank}`).innerText = (d.betAmt || 0).toLocaleString();
-                    document.getElementById(`win-${rank}`).innerText = (d.winAmt || 0).toLocaleString();
+                    if(document.getElementById(`name-${rank}`)) document.getElementById(`name-${rank}`).innerText = data.name || "User";
+                    if(document.getElementById(`phone-${rank}`)) document.getElementById(`phone-${rank}`).innerText = mPhone;
+                    if(document.getElementById(`bet-${rank}`)) document.getElementById(`bet-${rank}`).innerText = betAmt;
+                    if(document.getElementById(`win-${rank}`)) document.getElementById(`win-${rank}`).innerText = winAmt;
                 }
             } 
             
             // List ထဲတွင် အစဉ်လိုက် ပြသခြင်း
-            listArea.innerHTML += `<div class="list-item">
-                <div>${rank}</div>
-                <div><b>${d.name || "User"}</b><br><small>${mPhone}</small></div>
-                <div style="text-align:right">${(d.betAmt || 0).toLocaleString()}</div>
-                <div style="text-align:right; color:#52c41a;">${(d.winAmt || 0).toLocaleString()}</div>
-            </div>`;
+            listArea.innerHTML += `
+                <div class="list-item">
+                    <div style="text-align:center; color:var(--accent-blue)">${rank}</div>
+                    <div>
+                        <b>${data.name || "User"}</b><br>
+                        <small style="opacity:0.7; color:var(--accent-blue)">${mPhone}</small>
+                    </div>
+                    <div style="text-align:right">${betAmt}</div>
+                    <div style="text-align:right; color:#52c41a; font-weight:bold;">${winAmt}</div>
+                </div>`;
         });
     }, (err) => {
         console.error("Query Error:", err);
     });
+    
     
 </script>
 </body>

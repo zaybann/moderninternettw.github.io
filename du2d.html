@@ -237,27 +237,42 @@
         }
     });
 
-        // Dubai Winners List (Query filters for Dubai type if needed)
-    const winQuery = query(collection(db, "winners"), where("type", "==", "Dubai 2D"), orderBy("timestamp", "desc"), limit(50));
-    // Note: ensure your admin panel writes "type: Dubai" when results are out.
-    // Otherwise, using the standard th2d query if all winners are mixed.
+            // Dubai Winners List (Index မလိုဘဲ အလုပ်လုပ်မည့် Query)
+    // timestamp ဖြင့် စီခြင်းကို Client side မှာပဲ လုပ်ပါမည်
+    const winQuery = query(collection(db, "du_winners"), limit(50));
     
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');
+        // Podium တွေကို အရင်ဖျောက်ထားမည်
+        document.getElementById('user-1').style.visibility = "hidden";
+        document.getElementById('user-2').style.visibility = "hidden";
+        document.getElementById('user-3').style.visibility = "hidden";
+        
         listArea.innerHTML = "";
+        
         if (snap.empty) {
             document.getElementById('winNumDisplay').innerText = "--";
             document.getElementById('resultMeta').innerText = "ဒေတာများ မရှိသေးပါ";
             return;
         }
-        const latest = snap.docs[0].data();
-        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
-        document.getElementById('resultMeta').innerText = `${latest.date} (${latest.time})`;
 
-        snap.forEach((doc, index) => {
+        // ဒေတာများကို အချိန်အလိုက် (timestamp) အသစ်ဆုံးကို အပေါ်တင်ရန် Sort လုပ်မည်
+        const sortedDocs = snap.docs.sort((a, b) => {
+            const timeA = a.data().timestamp?.toMillis() || 0;
+            const timeB = b.data().timestamp?.toMillis() || 0;
+            return timeB - timeA;
+        });
+
+        // နောက်ဆုံးထွက်ဂဏန်း
+        const latest = sortedDocs[0].data();
+        document.getElementById('winNumDisplay').innerText = latest.winNum || "--";
+        document.getElementById('resultMeta').innerText = `${latest.date || ""} (${latest.time || ""})`;
+
+        sortedDocs.forEach((doc, index) => {
             const d = doc.data();
             const rank = index + 1;
             const mPhone = d.phone ? d.phone.substring(0,3) + "****" + d.phone.slice(-3) : "09***";
+            
             if(rank <= 3) {
                 const el = document.getElementById(`user-${rank}`);
                 if(el) {
@@ -267,11 +282,17 @@
                     document.getElementById(`bet-${rank}`).innerText = (d.betAmt || 0).toLocaleString();
                     document.getElementById(`win-${rank}`).innerText = (d.winAmt || 0).toLocaleString();
                 }
-            } else {
-                listArea.innerHTML += `<div class="list-item"><div>${rank}</div><div><b>${d.name}</b><br><small>${mPhone}</small></div><div style="text-align:right">${(d.betAmt || 0).toLocaleString()}</div><div style="text-align:right; color:#52c41a;">${(d.winAmt || 0).toLocaleString()}</div></div>`;
-            }
+            } 
+
+            listArea.innerHTML += `<div class="list-item">
+                <div>${rank}</div>
+                <div><b>${d.name || "User"}</b><br><small>${mPhone}</small></div>
+                <div style="text-align:right">${(d.betAmt || 0).toLocaleString()}</div>
+                <div style="text-align:right; color:#52c41a;">${(d.winAmt || 0).toLocaleString()}</div>
+            </div>`;
         });
     });
+
 </script>
 </body>
 </html>

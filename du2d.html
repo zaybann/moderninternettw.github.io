@@ -215,7 +215,6 @@
     });
 
     window.goToSection = (page, name) => {
-        // Admin က ပိတ်ထားခြင်း ရှိမရှိ စစ်ဆေးသည်
         if (sectionStatus[name] !== false) {
             window.location.href = page;
         } else {
@@ -237,64 +236,52 @@
         }
     });
 
-        // --- Dubai 2D Winning List Logic ---
+    // Dubai Winners List (Query for du_winners)
     function maskPhone(phone) {
         let p = phone ? phone.toString() : "09******000";
         return p.substring(0, 3) + "******" + p.slice(-3);
     }
 
-    // Admin ဘက်က သွင်းလိုက်တဲ့ status: "Win" နဲ့ Dubai 2D အမျိုးအစားကိုပဲ ဆွဲထုတ်မည်
-    const winQuery = query(
-        collection(db, "du_winners"), 
-        where("status", "==", "Win"),
-        orderBy("timestamp", "desc"), 
-        limit(50)
-    );
-
+    // Admin ဘက်မှ du_winners ထဲသို့ သွင်းသော status: "Win" ကို အခြေခံ၍ ဆွဲထုတ်မည်
+    // Index error မတက်စေရန် query ကို ရိုးရိုးပဲဆွဲပြီး client-side sorting လုပ်ပါမည်
+    const winQuery = query(collection(db, "du_winners"), where("status", "==", "Win"), limit(100));
+    
     onSnapshot(winQuery, (snap) => {
         const listArea = document.getElementById('winnerList');
-        const winNumDisplay = document.getElementById('winNumDisplay');
-        const resultMeta = document.getElementById('resultMeta');
+        const winDisplay = document.getElementById('winNumDisplay');
+        const metaDisplay = document.getElementById('resultMeta');
         
         listArea.innerHTML = "";
-        
-        // Podium (Rank 1, 2, 3) များကို Reset ချခြင်း
         [1, 2, 3].forEach(r => {
             const el = document.getElementById(`user-${r}`);
             if(el) el.style.visibility = "hidden";
         });
 
         if (snap.empty) {
-            if(winNumDisplay) winNumDisplay.innerText = "--";
-            if(resultMeta) resultMeta.innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
+            winDisplay.innerText = "--";
+            metaDisplay.innerText = "အနိုင်ရသူစာရင်း မရှိသေးပါ";
             return;
         }
 
-        // နောက်ဆုံးထွက်ထားသော ပေါက်ဂဏန်းနှင့် ရက်စွဲကို ယူခြင်း
-        const latestDoc = snap.docs[0].data();
-        if(winNumDisplay) winNumDisplay.innerText = latestDoc.winNum || "--";
-        if(resultMeta) resultMeta.innerText = `${latestDoc.date || ""} (${latestDoc.time || ""})`;
+        // Timestamp အလိုက် အသစ်ဆုံးကို အရင်စီမည်
+        const allDocs = snap.docs.map(doc => doc.data())
+            .sort((a, b) => (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0));
 
-        // နောက်ဆုံးအကြိမ် (Latest Batch) မှာ ပေါက်တဲ့သူတွေကိုပဲ စစ်ထုတ်ပြီး WinAmt အများအနည်း စီမည်
-        let batch = [];
-        snap.forEach(doc => {
-            const d = doc.data();
-            // နောက်ဆုံးပေါက်ဂဏန်း ထွက်ထားတဲ့ ရက်စွဲ နဲ့ အချိန် (Section) တူသူများကိုသာ ယူမည်
-            if(d.date === latestDoc.date && d.time === latestDoc.time) {
-                batch.push(d);
-            }
-        });
+        // နောက်ဆုံးထွက်ထားသော Batch (Date နှင့် Time တူသူများ) ကို ယူမည်
+        const latestDoc = allDocs[0];
+        winDisplay.innerText = latestDoc.winNum || "--";
+        metaDisplay.innerText = `${latestDoc.date || ""} (${latestDoc.time || ""})`;
 
-        // နိုင်ငွေ (WinAmt) အများဆုံးသူကို ထိပ်ဆုံးက ထားမည်
-        batch.sort((a, b) => (Number(b.winAmt) || 0) - (Number(a.winAmt) || 0));
+        // နောက်ဆုံးအကြိမ်ပေါက်သူများကို WinAmt အများဆုံးမှ အနည်းဆုံးသို့ စီမည်
+        const batchWinners = allDocs.filter(d => d.date === latestDoc.date && d.time === latestDoc.time)
+            .sort((a, b) => (Number(b.winAmt) || 0) - (Number(a.winAmt) || 0));
 
-        batch.forEach((data, index) => {
+        batchWinners.forEach((data, index) => {
             const rank = index + 1;
             const mPhone = maskPhone(data.phone);
             const winAmt = (Number(data.winAmt) || 0).toLocaleString();
             const betAmt = (Number(data.betAmt) || 0).toLocaleString();
 
-            // Rank 1, 2, 3 အတွက် Podium မှာပြခြင်း
             if (rank <= 3) {
                 const el = document.getElementById(`user-${rank}`);
                 if(el) {
@@ -306,7 +293,6 @@
                 }
             } 
             
-            // List ထဲတွင် အစဉ်လိုက် ပြသခြင်း
             listArea.innerHTML += `
                 <div class="list-item">
                     <div style="text-align:center; color:var(--accent-blue)">${rank}</div>
@@ -321,8 +307,6 @@
     }, (err) => {
         console.error("Query Error:", err);
     });
-    
-    
 </script>
 </body>
 </html>

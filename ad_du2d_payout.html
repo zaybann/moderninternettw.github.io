@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dubai 2D Admin - Payout Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; --card-bg: #001e36; --accent: #00a2ff; 
+            --white: #ffffff; --text-dim: #a6adb4; --success: #52c41a; 
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 10px; }
+        
+        .header { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 10px; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 15px; }
+        
+        .section-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+        .tab { background: var(--card-bg); padding: 12px 5px; text-align: center; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); color: var(--text-dim); }
+        .tab.active { background: var(--accent); border-color: var(--accent); font-weight: bold; color: white; }
+
+        .control-card { background: var(--card-bg); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(0,162,255,0.3); }
+        .win-input { width: 120px; padding: 12px; border-radius: 10px; border: 2px solid var(--accent); background: #000; color: #fff; font-size: 28px; text-align: center; margin: 15px 0; outline: none; }
+        .payout-btn { background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; font-size: 16px; cursor: pointer; }
+
+        .list-section { background: var(--card-bg); border-radius: 15px; overflow: hidden; }
+        .list-header { padding: 15px; background: rgba(255,255,255,0.05); font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { color: var(--accent); font-weight: normal; }
+        .num-badge { background: rgba(0,162,255,0.2); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 3px; display: inline-block; margin-bottom: 3px; }
+        #loading { text-align: center; padding: 30px; color: var(--text-dim); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="admin_dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <h3>Dubai 2D Payout Control</h3>
+    </div>
+
+    <div class="section-tabs">
+        <div class="tab active" onclick="switchSection('11:00 AM Section', this)">11:00 AM</div>
+        <div class="tab" onclick="switchSection('01:00 PM Section', this)">01:00 PM</div>
+        <div class="tab" onclick="switchSection('03:00 PM Section', this)">03:00 PM</div>
+        <div class="tab" onclick="switchSection('05:00 PM Section', this)">05:00 PM</div>
+        <div class="tab" onclick="switchSection('07:00 PM Section', this)">07:00 PM</div>
+        <div class="tab" onclick="switchSection('09:00 PM Section', this)">09:00 PM</div>
+    </div>
+
+    <div class="control-card">
+        <h4 id="currentSectionDisplay">11:00 AM Section</h4>
+        <input type="number" id="winNumInput" class="win-input" placeholder="00" oninput="if(this.value.length > 2) this.value = this.value.slice(0, 2);">
+        <button class="payout-btn" onclick="startPayout()">အလျော်အစားလုပ်မည်</button>
+    </div>
+
+    <div class="list-section">
+        <div class="list-header">
+            <span>လက်ရှိထိုးထားသည့်စာရင်း</span>
+            <span id="totalBetsCount" style="color: var(--accent);">0 စောင်</span>
+        </div>
+        <div id="table-container">
+            <table>
+                <thead>
+                    <tr><th>အမည်</th><th>ဂဏန်းများ</th><th>စုစုပေါင်း</th></tr>
+                </thead>
+                <tbody id="betsTableBody"></tbody>
+            </table>
+            <div id="loading">ဒေတာများ ဆွဲယူနေပါသည်...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, increment, addDoc, deleteDoc, serverTimestamp, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentSection = "11:00 AM Section";
+        let unsubscribe = null;
+
+        window.switchSection = (section, el) => {
+            currentSection = section;
+            document.getElementById('currentSectionDisplay').innerText = section;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            listenToBets();
+        };
+
+        function listenToBets() {
+            if (unsubscribe) unsubscribe();
+            const tbody = document.getElementById('betsTableBody');
+            document.getElementById('loading').style.display = "block";
+
+            const q = query(collection(db, "du_bets"), where("time", "==", currentSection));
+            
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                tbody.innerHTML = "";
+                document.getElementById('loading').style.display = "none";
+                document.getElementById('totalBetsCount').innerText = snapshot.size + " စောင်";
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px; color:var(--text-dim);">စာရင်းမရှိပါ။</td></tr>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const itemsText = data.items.map(i => `<span class="num-badge">${i.num}(${i.amt})</span>`).join("");
+                    tbody.innerHTML += `<tr>
+                        <td><b>${data.name || "User"}</b><br><small style="color:var(--text-dim)">${data.phone || ""}</small></td>
+                        <td>${itemsText}</td>
+                        <td style="color:var(--accent)">${(data.total || 0).toLocaleString()}</td>
+                    </tr>`;
+                });
+            });
+        }
+
+        window.startPayout = async () => {
+            const winNum = document.getElementById('winNumInput').value;
+            if (winNum.length !== 2) return Swal.fire("အမှား", "ပေါက်ဂဏန်း ၂ လုံး ထည့်ပါ", "error");
+
+            const confirm = await Swal.fire({
+                title: 'သေချာပါသလား?',
+                text: `${currentSection} အတွက် (${winNum}) ဖြင့် အလျော်အစားလုပ်ပါမည်။ Winners စာရင်းဟောင်းများကို အကုန်ဖျက်ထုတ်ပါမည်။`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#52c41a',
+                confirmButtonText: 'အတည်ပြုသည်'
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            Swal.fire({ title: 'စာရင်းဟောင်းများ ရှင်းလင်းနေသည်...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+            try {
+                // ၁။ du_winners ထဲက data အားလုံးကို Batch ဖြင့် အရင်ဆုံး ပြောင်အောင်ဖျက်ခြင်း
+                const winnersRef = collection(db, "du_winners");
+                const winnersSnap = await getDocs(winnersRef);
+                
+                if (!winnersSnap.empty) {
+                    const batch = writeBatch(db);
+                    winnersSnap.docs.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit(); // ဖျက်တဲ့အလုပ် ပြီးဆုံးအောင် စောင့်မည်
+                }
+
+                // ၂။ ထိုးထားသည့် စာရင်းများကို ဆွဲယူခြင်း
+                const q = query(collection(db, "du_bets"), where("time", "==", currentSection));
+                const snap = await getDocs(q);
+
+                if(snap.empty) {
+                    Swal.fire("သတိ", "ရှင်းလင်းရန် စာရင်းမရှိပါ။", "info");
+                    return;
+                }
+
+                let winCount = 0;
+                let processed = 0;
+
+                for (const betDoc of snap.docs) {
+                    const data = betDoc.data();
+                    let isWinner = false;
+                    let totalPayoutAmt = 0;
+                    let winningBetAmt = 0; 
+
+                    data.items.forEach(item => {
+                        if (item.num === winNum) {
+                            isWinner = true;
+                            totalPayoutAmt += (item.amt * 80); 
+                            winningBetAmt += item.amt; 
+                        }
+                    });
+
+                    if (isWinner) {
+                        // User Balance တိုးပေးခြင်း
+                        await updateDoc(doc(db, "users", data.uid), { balance: increment(totalPayoutAmt) });
+                        
+                        // du_winners ထဲသို့ ပေါက်သူစာရင်း အသစ်ထည့်ခြင်း
+                        await addDoc(collection(db, "du_winners"), {
+                            uid: data.uid, name: data.name || "User", phone: data.phone,
+                            betAmt: winningBetAmt, winAmt: totalPayoutAmt, winNum: winNum,
+                            status: "Win", date: data.date, time: currentSection, type: "Dubai 2D",
+                            timestamp: serverTimestamp()
+                        });
+                        winCount++;
+                    }
+
+                    // user_history ထဲသို့ မှတ်တမ်းသွင်းခြင်း
+                    await addDoc(collection(db, "user_history"), { 
+                        uid: data.uid, phone: data.phone, date: data.date, time: data.time, 
+                        winNum: winNum, betAmt: winningBetAmt, payout: totalPayoutAmt, items: data.items, 
+                        type: "Dubai 2D", status: isWinner ? "Win" : "Lose", 
+                        timestamp: serverTimestamp() 
+                    });
+
+                    // bets ထဲမှ စာရင်းဖျက်ခြင်း
+                    await deleteDoc(betDoc.ref);
+                    processed++;
+                }
+
+                Swal.fire("အောင်မြင်ပါသည်", `စာရင်းဟောင်းများရှင်းလင်းပြီး ပေါက်သူ (${winCount}) ဦးရှိပါသည်။`, "success");
+                document.getElementById('winNumInput').value = "";
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire("Error", e.message, "error");
+            }
+        };
+
+        listenToBets();
+    </script>
+</body>
+</html>

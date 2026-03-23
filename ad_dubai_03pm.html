@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dubai Admin - 03:00 PM Monitor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; 
+            --card-bg: #001e36;
+            --accent: #00a2ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+            --danger: #ff4d4f;
+            --money: #52c41a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 20px; padding-bottom: 100px; }
+
+        .header { display: flex; align-items: center; margin-bottom: 25px; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 15px; }
+        .header h2 { color: var(--accent); font-size: 20px; }
+
+        .card { background: var(--card-bg); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
+        
+        .switch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .num-box { 
+            background: rgba(0,0,0,0.4); min-height: 65px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border-radius: 8px; 
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s;
+        }
+        .num-box span.n-label { font-size: 17px; font-weight: bold; }
+        .num-box span.amt-label { font-size: 11px; color: var(--money); margin-top: 4px; font-weight: 500; }
+        
+        .num-box.selected { background: var(--danger) !important; border-color: #fff; box-shadow: 0 0 10px var(--danger); }
+        .num-box.selected span.amt-label { color: white; }
+
+        .footer-btns { display: flex; gap: 10px; margin-top: 25px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 15px; }
+        .btn-close { background: var(--danger); }
+        .btn-open { background: #444; }
+
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 11, 20, 0.4); backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader-box { background: #001e36; padding: 25px 40px; border-radius: 15px; text-align: center; border: 1px solid var(--accent); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .loader { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <span class="loader"></span>
+            <div id="loadingText" style="margin-top:12px; font-size:13px; color: white;">ဒေတာများ ရယူနေပါသည်...</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>Dubai (03:00 PM)</h2>
+    </div>
+
+    <div class="card">
+        <div class="switch-row">
+            <span><i class="fas fa-clock"></i> ၀၃:၀၀ PM ပိတ်/ဖွင့်</span>
+            <label class="switch">
+                <input type="checkbox" id="tog03">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 14px; color: var(--text-dim);">Live Bet Amounts (ယနေ့)</h3>
+            <span id="totalSheet" style="font-size: 12px; color: var(--accent);">0 Sheets</span>
+        </div>
+        
+        <div class="num-grid" id="grid"></div>
+        
+        <div class="footer-btns">
+            <button class="btn btn-open" onclick="clearSelection()">အားလုံးဖွင့်မည်</button>
+            <button class="btn btn-close" onclick="saveClosedNumbers()">ဂဏန်းပိတ်မည်</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, collection, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", 
+            authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", 
+            storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", 
+            appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const timeRef = doc(db, "settings", "time_control");
+        const closeRef = doc(db, "settings", "close_numbers");
+        const betCol = collection(db, "du_bets");
+
+        let selectedNums = new Set();
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingText = document.getElementById('loadingText');
+
+        function showLoading(text) {
+            loadingText.innerText = text || "ခေတ္တစောင့်ပါ...";
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingScreen.style.display = 'none';
+        }
+
+        const grid = document.getElementById('grid');
+        for (let i = 0; i <= 99; i++) {
+            let n = i.toString().padStart(2, '0');
+            let box = document.createElement('div');
+            box.className = 'num-box';
+            box.id = 'n-' + n;
+            box.innerHTML = `<span class="n-label">${n}</span><span class="amt-label" id="amt-${n}">0</span>`;
+            box.onclick = () => toggleNum(n);
+            grid.appendChild(box);
+        }
+
+        function toggleNum(n) {
+            if (selectedNums.has(n)) {
+                selectedNums.delete(n);
+                document.getElementById('n-' + n).classList.remove('selected');
+            } else {
+                selectedNums.add(n);
+                document.getElementById('n-' + n).classList.add('selected');
+            }
+        }
+
+        // Live Bet Amounts - Query for section: du_03
+        const today = new Date();
+        const dateStr = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
+        const qBets = query(betCol, where("section", "==", "du_03"), where("date", "==", dateStr));
+
+        onSnapshot(qBets, (snap) => {
+            for(let i=0; i<=99; i++) document.getElementById('amt-' + i.toString().padStart(2, '0')).innerText = "0";
+            
+            let betSummary = {};
+            document.getElementById('totalSheet').innerText = snap.size + " Sheets";
+
+            snap.forEach(doc => {
+                const items = doc.data().items || [];
+                items.forEach(item => {
+                    betSummary[item.num] = (betSummary[item.num] || 0) + (parseInt(item.amt) || 0);
+                });
+            });
+
+            for (let num in betSummary) {
+                const el = document.getElementById('amt-' + num);
+                if (el) el.innerText = betSummary[num].toLocaleString();
+            }
+            hideLoading();
+        });
+
+        // ပိတ်ဂဏန်းများ Status (du_03)
+        onSnapshot(closeRef, (s) => {
+            if (s.exists()) {
+                const closedArr = (s.data().du_03 || "").split(',').filter(x => x);
+                selectedNums.clear();
+                document.querySelectorAll('.num-box').forEach(b => b.classList.remove('selected'));
+                closedArr.forEach(n => {
+                    selectedNums.add(n);
+                    const target = document.getElementById('n-' + n);
+                    if(target) target.classList.add('selected');
+                });
+            }
+        });
+
+        // အချိန်ပိတ်/ဖွင့် Status (du_03)
+        onSnapshot(timeRef, (s) => {
+            if (s.exists()) document.getElementById('tog03').checked = s.data().du_03;
+        });
+
+        document.getElementById('tog03').onchange = async () => {
+            showLoading("ပြင်ဆင်နေပါသည်...");
+            try {
+                await updateDoc(timeRef, { du_03: document.getElementById('tog03').checked });
+            } catch (e) { alert(e.message); }
+            hideLoading();
+        };
+
+        window.saveClosedNumbers = async () => {
+            showLoading("ဂဏန်းများ ပိတ်နေပါသည်...");
+            const closedString = Array.from(selectedNums).sort().join(',');
+            try {
+                await updateDoc(closeRef, { du_03: closedString });
+                Swal.fire({ icon: 'success', title: 'ဂဏန်းပိတ်ခြင်း အောင်မြင်သည်', timer: 1200, showConfirmButton: false, background: '#001e36', color: '#fff' });
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+            hideLoading();
+        };
+
+        window.clearSelection = async () => {
+            const confirm = await Swal.fire({
+                title: 'သေချာပါသလား?',
+                text: "03:00 PM အတွက် ပိတ်ထားသော ဂဏန်းအားလုံးကို ပြန်ဖွင့်ပါမည်။",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'ဖွင့်မည်',
+                cancelButtonText: 'မလုပ်တော့ပါ',
+                background: '#001e36',
+                color: '#fff'
+            });
+
+            if (confirm.isConfirmed) {
+                showLoading("ပြန်ဖွင့်နေပါသည်...");
+                try {
+                    await updateDoc(closeRef, { du_03: "" });
+                    selectedNums.clear();
+                    document.querySelectorAll('.num-box').forEach(b => b.classList.remove('selected'));
+                    Swal.fire({ icon: 'success', title: 'ဂဏန်းအားလုံး ဖွင့်လိုက်ပါပြီ', timer: 1200, showConfirmButton: false, background: '#001e36', color: '#fff' });
+                } catch (e) { Swal.fire('Error', e.message, 'error'); }
+                hideLoading();
+            }
+        };
+
+    </script>
+</body>
+</html>

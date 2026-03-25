@@ -228,14 +228,23 @@
 
     // Admin Settings (section_4d)
     onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
-        if (snapshot.exists()) { sectionStatus = snapshot.data(); }
+        if (snapshot.exists()) { 
+            sectionStatus = snapshot.data(); 
+        }
     });
 
     window.goToSection4D = () => {
-        if (sectionStatus.section_4d === true) {
+        // sectionStatus ရှိမရှိနှင့် section_4d က true ဖြစ်မဖြစ် စစ်ဆေးခြင်း
+        if (sectionStatus && sectionStatus.section_4d === true) {
             window.location.href = "4d.html";
         } else {
-            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "4D ထိုးခြင်းကို ခေတ္တပိတ်ထားပါသည်။", icon: "error", background: "#002d5a", color: "#fff" });
+            Swal.fire({ 
+                title: "ထိုးချိန်ပြည့်ပါပြီ", 
+                text: "4D ထိုးခြင်းကို ခေတ္တပိတ်ထားပါသည်။", 
+                icon: "error", 
+                background: "#002d5a", 
+                color: "#fff" 
+            });
         }
     };
 

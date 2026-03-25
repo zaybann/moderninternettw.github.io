@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4D Admin - Control Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* ad_mm3d.html ရဲ့ Color Palette ကို သုံးထားပါတယ် */
+        :root { 
+            --bg-dark: #000b14; --card-bg: #001e36; --accent: #1890ff; 
+            --white: #ffffff; --text-dim: #a6adb4; --danger: #ff4d4f; --money: #52c41a;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        
+        body { 
+            background: var(--bg-dark); 
+            color: var(--white); 
+            padding: 15px; 
+            padding-bottom: 75px; /* bottom button အတွက် နေရာချန်ထားခြင်း */
+        }
+
+        /* Loading Overlay Style - From ad_mm3d */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); display: flex; justify-content: center; 
+            align-items: center; z-index: 9999;
+        }
+        .loader-box { background: var(--card-bg); padding: 20px 30px; border-radius: 12px; text-align: center; border: 1px solid var(--accent); }
+        .loader { width: 25px; height: 25px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header Style - From ad_mm3d */
+        .header { display: flex; align-items: center; margin-bottom: 15px; }
+        .back-btn { color: white; text-decoration: none; font-size: 18px; margin-right: 12px; }
+        .header h2 { font-size: 17px; color: var(--accent); }
+
+        /* Card Style */
+        .admin-card { 
+            background: var(--card-bg); padding: 20px; border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.05); max-width: 500px; margin: auto; 
+        }
+
+        /* Status (Switch) Box - ad_mm3d style */
+        .status-card {
+            background: rgba(0,0,0,0.2); padding: 12px 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Switch Style - ad_mm3d style */
+        .switch { position: relative; display: inline-block; width: 38px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        /* Textarea & Button Styles */
+        label { display: block; margin-bottom: 12px; font-size: 13px; color: var(--text-dim); }
+        textarea { 
+            width: 100%; height: 150px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 10px; color: white; padding: 15px; outline: none; resize: none; 
+            margin-bottom: 20px; font-size: 15px; line-height: 1.5;
+        }
+        textarea:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
+        
+        /* Footer Save Button - ad_mm3d style */
+        .footer-actions {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(0, 21, 41, 0.9); backdrop-filter: blur(10px);
+            padding: 12px 15px; border-top: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+        .save-btn { 
+            width: 100%; background: var(--accent); color: white; border: none; 
+            padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; 
+            font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <span class="loader"></span>
+            <div id="loadingText" style="margin-top:8px; font-size:12px; color: white;">ခေတ္တစောင့်ပါ...</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>4D Control Panel</h2>
+    </div>
+
+    <div class="admin-card">
+        <div class="status-card">
+            <div>
+                <h3 style="font-size: 14px; margin-bottom: 2px;">4D Bet Section</h3>
+                <p style="font-size: 11px;" id="msg">စစ်ဆေးနေဆဲ...</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="tog4D">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <label><i class="fas fa-ban"></i> ပိတ်မည့်ဂဏန်းများ (ကော်မာ , ခံ၍ရေးပါ)</label>
+        <textarea id="closedNums" placeholder="ဥပမာ - 1234, 5566, 7890"></textarea>
+    </div>
+
+    <div class="footer-actions">
+        <button class="save-btn" onclick="saveClosedNumbers()">
+            <i class="fas fa-save"></i> ပိတ်ဂဏန်းများ သိမ်းဆည်းမည်
+        </button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // သင်ပြထားတဲ့ပုံအရ Path အမှန်တွေကို သုံးထားပါတယ်
+    const timeRef = doc(db, "settings", "time_control");
+    const settingsRef = doc(db, "settings", "4d_settings");
+
+    const loadingScreen = document.getElementById('loadingScreen');
+    const loadingText = document.getElementById('loadingText');
+
+    function showLoading(text) {
+        loadingText.innerText = text || "ခေတ္တစောင့်ပါ...";
+        loadingScreen.style.display = 'flex';
+    }
+
+    function hideLoading() {
+        loadingScreen.style.display = 'none';
+    }
+
+    // --- ၁။ Section အဖွင့်အပိတ် Logic (Realtime - ad_mm3d style) ---
+    onSnapshot(timeRef, (snap) => {
+        const msg = document.getElementById('msg');
+        const tog = document.getElementById('tog4D');
+        if (snap.exists()) {
+            // section_4d field ကိုပဲ ကြည့်ပါမယ်
+            const status = snap.data().section_4d;
+            if (status !== undefined) {
+                tog.checked = status;
+                msg.innerText = status ? "ဖွင့်ထားသည်" : "ပိတ်ထားသည်";
+                msg.style.color = status ? "var(--money)" : "var(--danger)";
+            } else {
+                msg.innerText = "Field မရှိသေးပါ";
+                msg.style.color = "orange";
+            }
+        }
+    });
+
+    // Switch ပြောင်းလဲချိန်
+    document.getElementById('tog4D').onchange = async (e) => {
+        showLoading("ပြင်ဆင်နေပါသည်...");
+        const val = e.target.checked;
+        try {
+            // merge: true သုံးထားလို့ မရှိရင် auto ဆောက်သွားမှာပါ
+            await setDoc(timeRef, { section_4d: val }, { merge: true });
+            
+            const Toast = Swal.mixin({ 
+                toast: true, position: 'top-end', showConfirmButton: false, 
+                timer: 1000, background: 'var(--card-bg)', color: '#fff' 
+            });
+            Toast.fire({ icon: 'success', title: val ? '4D ဖွင့်လိုက်ပါပြီ' : '4D ပိတ်လိုက်ပါပြီ' });
+        } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Error', text: "Firebase Permission ကို စစ်ဆေးပါ", background: 'var(--card-bg)', color: '#fff' });
+        }
+        hideLoading();
+    };
+
+    // --- ၂။ ပိတ်ဂဏန်း Load & Save Logic (သင်ပေးထားတဲ့ code အတိုင်း) ---
+    async function loadClosedData() {
+        showLoading("ဒေတာများ ရယူနေပါသည်...");
+        try {
+            const snap = await getDoc(settingsRef);
+            if (snap.exists()) {
+                document.getElementById('closedNums').value = snap.data().closed || "";
+            }
+        } catch (e) { console.error(e); }
+        hideLoading();
+    }
+
+    window.saveClosedNumbers = async () => {
+        const inputVal = document.getElementById('closedNums').value;
+        showLoading("သိမ်းဆည်းနေပါသည်...");
+        try {
+            await setDoc(settingsRef, { closed: inputVal }, { merge: true });
+            Swal.fire({
+                icon: 'success',
+                title: 'အောင်မြင်သည်',
+                text: 'ပိတ်ဂဏန်းများ သိမ်းဆည်းပြီးပါပြီ',
+                background: 'var(--card-bg)',
+                color: '#fff',
+                confirmButtonColor: 'var(--accent)'
+            });
+        } catch (e) {
+            Swal.fire({ icon: 'error', title: 'Error', text: "သိမ်းဆည်း၍မရပါ", background: 'var(--card-bg)', color: '#fff' });
+        }
+        hideLoading();
+    };
+
+    // စဖွင့်ချင်း ဒေတာဆွဲမယ်
+    loadClosedData();
+
+</script>
+</body>
+</html>

@@ -213,7 +213,33 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let sectionStatus = {};
+    // --- Admin Settings (section_4d) ချိတ်ဆက်မှု အပိုင်း ---
+    let sectionStatus = { section_4d: false }; 
+
+    // Admin ရဲ့ timeRef (settings/4d_time) နှင့် အတိအကျ ချိတ်ဆက်ခြင်း
+    onSnapshot(doc(db, "settings", "time_control"), (snapshot) => {
+        if (snapshot.exists()) { 
+            sectionStatus = snapshot.data(); 
+        }
+    });
+
+    window.goToSection4D = () => {
+        // Admin ဘက်က toggle (true/false) အတိုင်း စစ်ဆေးခြင်း
+        if (sectionStatus && sectionStatus.section_4d === true) {
+            window.location.href = "4d.html";
+        } else {
+            // ပိတ်ထားပါက ပြမည့် Alert
+            Swal.fire({ 
+                title: "ထိုးချိန်ပြည့်ပါပြီ", 
+                text: "4D ထိုးခြင်းကို ခေတ္တပိတ်ထားပါသည်။", 
+                icon: "error", 
+                background: "#001a35", 
+                color: "#fff",
+                confirmButtonColor: "#1890ff"
+            });
+        }
+    };
+    // --------------------------------------------------
 
     // SPA Navigation
     window.navigateTo = (pageId) => {
@@ -224,28 +250,6 @@
 
     window.toggleModal = (s) => { 
         document.getElementById('sectionModal').style.display = s ? 'flex' : 'none'; 
-    };
-
-    // Admin Settings (section_4d)
-    onSnapshot(doc(db, "settings", "sections"), (snapshot) => {
-        if (snapshot.exists()) { 
-            sectionStatus = snapshot.data(); 
-        }
-    });
-
-    window.goToSection4D = () => {
-        // sectionStatus ရှိမရှိနှင့် section_4d က true ဖြစ်မဖြစ် စစ်ဆေးခြင်း
-        if (sectionStatus && sectionStatus.section_4d === true) {
-            window.location.href = "4d.html";
-        } else {
-            Swal.fire({ 
-                title: "ထိုးချိန်ပြည့်ပါပြီ", 
-                text: "4D ထိုးခြင်းကို ခေတ္တပိတ်ထားပါသည်။", 
-                icon: "error", 
-                background: "#002d5a", 
-                color: "#fff" 
-            });
-        }
     };
 
     // Auth & Balance

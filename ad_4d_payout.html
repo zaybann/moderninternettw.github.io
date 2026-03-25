@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>4D Admin - Payout Control</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b14; --card-bg: #001e36; --accent: #1890ff; 
+            --white: #ffffff; --text-dim: #a6adb4; --success: #52c41a; --purple: #722ed1;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        body { background: var(--bg-dark); color: var(--white); padding: 10px; -webkit-tap-highlight-color: transparent; }
+
+        .header { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 10px; }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; margin-right: 15px; width: 40px; }
+        .header h2 { font-size: 1.1rem; color: var(--purple); }
+
+        .card { background: var(--card-bg); padding: 25px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); text-align: center; margin-bottom: 20px; }
+        
+        label { color: var(--text-dim); display: block; margin-bottom: 12px; font-size: 13px; }
+        input { 
+            width: 100%; max-width: 300px; padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); 
+            background: rgba(0,0,0,0.2); color: white; font-size: 2rem; outline: none; text-align: center;
+            font-weight: bold; letter-spacing: 8px; margin-bottom: 10px;
+        }
+
+        .btn-action { 
+            width: 100%; padding: 16px; border: none; border-radius: 12px; 
+            background: var(--purple); color: white; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(114, 46, 209, 0.2); margin-top: 10px;
+        }
+        .btn-action:active { transform: scale(0.98); }
+
+        .list-title { font-size: 0.9rem; color: var(--purple); margin: 15px 0 10px 5px; text-align: left; display: flex; align-items: center; gap: 8px; }
+        .table-container { width: 100%; overflow-x: auto; background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 450px; }
+        th { background: rgba(114, 46, 209, 0.1); color: var(--purple); text-align: left; padding: 12px 10px; font-size: 11px; }
+        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--white); }
+        .bet-items { color: var(--accent); font-weight: bold; }
+        .total-amt { color: var(--success); font-weight: bold; text-align: right; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>4D အလျော်အစား (၄၀၀၀ ဆ - ဒဲ့)</h2>
+    </div>
+
+    <div class="card">
+        <label>4D ပေါက်ဂဏန်း (၄ လုံး) ရိုက်ထည့်ပါ</label>
+        <input type="number" id="winNumInput" placeholder="----" oninput="if(this.value.length>4) this.value=this.value.slice(0,4)">
+        <button class="btn-action" onclick="handle4DPayout()">
+            <i class="fas fa-coins"></i> ဒဲ့ပေါက် (၄၀၀၀ ဆ) ဖြင့် လျော်မည်
+        </button>
+    </div>
+
+    <div class="list-title"><i class="fas fa-list-ul"></i> လျော်ရန်ကျန်ရှိသော 4D စာရင်းများ</div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ဖုန်းနံပါတ်</th>
+                    <th>ဂဏန်း (ထိုးကြေး)</th>
+                    <th style="text-align: right;">စုစုပေါင်း</th>
+                </tr>
+            </thead>
+            <tbody id="betListBody">
+                <tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-dim);">ဒေတာများ ဆွဲယူနေပါသည်...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, collection, query, where, getDocs, updateDoc, deleteDoc, addDoc, increment, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = { 
+            apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk", authDomain: "twod-aa6c1.firebaseapp.com", 
+            projectId: "twod-aa6c1", storageBucket: "twod-aa6c1.appspot.com", 
+            messagingSenderId: "674076613631", appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca" 
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- ၁။ 4D Section မှ မလျော်ရသေးသော စာရင်းများကို ပြသခြင်း ---
+        function loadPendingBets() {
+            const q = query(collection(db, "4d_bets"), where("time", "==", "4D Section"));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('betListBody');
+                tbody.innerHTML = "";
+                let hasData = false;
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    hasData = true;
+                    const itemsStr = data.items.map(i => `${i.num} (<span style="color:var(--white)">${i.amt}</span>)`).join(", ");
+                    tbody.innerHTML += `<tr>
+                        <td>${data.phone || 'Unknown'}</td>
+                        <td class="bet-items">${itemsStr}</td>
+                        <td class="total-amt">${Number(data.total).toLocaleString()}</td>
+                    </tr>`;
+                });
+                if (!hasData) tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:30px; color:var(--text-dim);">လျော်ရန်စာရင်း မရှိပါ။</td></tr>`;
+            });
+        }
+
+        // --- ၂။ အလျော်ပေးခြင်း၊ 4D_winners တင်ခြင်းနှင့် စာရင်းရှင်းခြင်း Logic ---
+        window.handle4DPayout = async function() {
+            const winNum = document.getElementById('winNumInput').value;
+            if(!winNum || winNum.length !== 4) return Swal.fire("သတိ", "4D ပေါက်ဂဏန်း (၄ လုံး) ရိုက်ပါ", "warning");
+
+            const confirm = await Swal.fire({
+                title: 'အတည်ပြုပါ',
+                text: `ပေါက်ဂဏန်း [ ${winNum} ] ဖြင့် ဒဲ့ (၄၀၀၀ ဆ) လျော်မည်။ Winner စာရင်းအသစ်တင်ပြီး ထိုးကြေးစာရင်းများကို ဖျက်ထုတ်မည်။`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#722ed1',
+                confirmButtonText: 'သေချာသည်',
+                background: '#001e36', color: '#fff'
+            });
+
+            if(!confirm.isConfirmed) return;
+
+            Swal.fire({ title: 'လုပ်ဆောင်နေပါသည်...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // (က) 4D_winners အဟောင်းများကို ရှင်းလင်းခြင်း
+                const winnersRef = collection(db, "4D_winners");
+                const oldWinnersSnap = await getDocs(winnersRef);
+                const deletePromises = oldWinnersSnap.docs.map(doc => deleteDoc(doc.ref));
+                await Promise.all(deletePromises);
+
+                // (ခ) 4d_bets မှ စာရင်းများကို စစ်ဆေးခြင်း
+                const q = query(collection(db, "4d_bets"), where("time", "==", "4D Section"));
+                const snap = await getDocs(q);
+                let winCount = 0;
+                let processedCount = 0;
+
+                for (const betDoc of snap.docs) {
+                    const data = betDoc.data();
+                    processedCount++;
+                    let totalPayout = 0;
+                    let isWinner = false;
+
+                    // ဒဲ့ပေါက် (၄၀၀၀ ဆ) စစ်ဆေးခြင်း
+                    data.items.forEach(item => {
+                        if (item.num === winNum) {
+                            totalPayout += (Number(item.amt) * 4000);
+                            isWinner = true;
+                        }
+                    });
+
+                    if (isWinner) {
+                        // ၁။ User Balance တိုးပေးခြင်း
+                        await updateDoc(doc(db, "users", data.uid), { balance: increment(totalPayout) });
+
+                        // ၂။ 4D_winners စာရင်းထဲသို့ တင်ခြင်း
+                        await addDoc(collection(db, "4D_winners"), {
+                            uid: data.uid,
+                            name: data.name || "User",
+                            phone: data.phone,
+                            betAmt: data.total,
+                            winAmt: totalPayout,
+                            winNum: winNum,
+                            status: "Win", 
+                            date: data.date || "",
+                            time: "4D Section",
+                            type: "4D",
+                            timestamp: serverTimestamp()
+                        });
+                        winCount++;
+                    }
+
+                    // ၃။ User History ထဲသို့ မှတ်တမ်းသွင်းခြင်း
+                    await addDoc(collection(db, "user_history"), {
+                        uid: data.uid,
+                        phone: data.phone,
+                        items: data.items,
+                        total: data.total,
+                        payout: totalPayout,
+                        winNum: winNum,
+                        status: isWinner ? "Win" : "Lose",
+                        type: "4D",
+                        date: data.date || '',
+                        time: "4D Section",
+                        timestamp: serverTimestamp()
+                    });
+                    
+                    // ၄။ bets collection ထဲမှ စာရင်းဖျက်ခြင်း
+                    await deleteDoc(betDoc.ref);
+                }
+
+                Swal.fire("အောင်မြင်ပါသည်", `စုစုပေါင်း (${processedCount}) စောင်ကို ရှင်းလင်းပြီး ပေါက်သူ (${winCount}) ဦးကို 4D_winners စာရင်းတင်ပေးပြီးပါပြီ။`, "success");
+                document.getElementById('winNumInput').value = "";
+            } catch (e) { 
+                console.error(e); 
+                Swal.fire("Error", "လုပ်ဆောင်ချက် မအောင်မြင်ပါ။", "error"); 
+            }
+        };
+
+        loadPendingBets();
+    </script>
+</body>
+</html>

@@ -3,506 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lucky Boss 556 - Home</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Server Maintenance | Lucky Boss 556</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --bg-dark: #000b18; 
-            --bg-card: rgba(0, 51, 102, 0.5); 
-            --accent-blue: #00a2ff; 
-            --white: #ffffff; 
-            --btn-blue: linear-gradient(135deg, #007bff, #0056b3);
-            --glass: rgba(255, 255, 255, 0.05);
-            /* wallet settings */
-            --accent: #1890ff; --green: #52c41a; --red: #ff4d4f; --dim: #a6adb4;
+        :root {
+            --neon-blue: #00f2fe;
+            --neon-purple: #7000ff;
+            --dark-bg: #00050a;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
-        
-        body { 
-            background: radial-gradient(circle at top, #001f3f, #000b18);
-            color: var(--white); 
-            padding-bottom: 90px;
-            min-height: 100vh;
-        }
 
-        /* Loader */
-        #page-loader { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--bg-dark); display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 9999; 
-        }
-        .spinner { 
-            width: 50px; height: 50px; 
-            border: 4px solid var(--glass); 
-            border-top: 4px solid var(--accent-blue); 
-            border-radius: 50%; 
-            animation: spin 1s linear infinite; 
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Header */
-        header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px; background: rgba(0, 11, 24, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky; top: 0; z-index: 1000;
-            border-bottom: 1px solid rgba(0, 162, 255, 0.2);
-        }
-        .logo { 
-            font-size: 20px; font-weight: 900; 
-            background: linear-gradient(to right, #fff, var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .user-balance { 
-            background: var(--glass); padding: 5px 10px; border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            text-align: right;
-        }
-        .deposit-btn { 
-            background: var(--btn-blue); border: none; padding: 7px 15px; 
-            border-radius: 20px; font-weight: bold; color: white; cursor: pointer;
-            font-size: 13px;
-        }
-
-        /* Banner & Marquee */
-        .promo-banner { padding: 12px; }
-        .promo-banner img {
-            width: 100%; border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-        }
-        .marquee-box { 
-            background: rgba(0, 162, 255, 0.1); padding: 8px; 
-            font-size: 13px; color: #80d4ff; 
-        }
-
-        /* Game Grid */
-        .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
-        .game-card { 
-            position: relative; background: var(--bg-card); 
-            border-radius: 15px; overflow: hidden; 
-            border: 1px solid rgba(255,255,255,0.08); 
-            transition: 0.3s;
-            aspect-ratio: 1.2 / 1;
-        }
-        .game-card:active { transform: scale(0.96); }
-        .game-card img { width: 100%; height: 100%; object-fit: cover; }
-        .game-title { 
-            position: absolute; bottom: 0; width: 100%; text-align: center; 
-            padding: 10px 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); 
-            font-size: 13px;
-        }
-        
-        /* Navigation Footer - Revised */
-        .footer-nav { 
-            position: fixed; bottom: 0; width: 100%; 
-            background: rgba(0, 11, 24, 0.95); 
-            backdrop-filter: blur(20px);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 5px 15px 25px 15px; 
-            border-top: 1px solid rgba(0, 162, 255, 0.2); 
-            z-index: 2000;
-        }
-        .nav-link { text-align: center; color: #7094b8; text-decoration: none; font-size: 10px; flex: 1; transition: 0.3s; cursor: pointer; }
-        .nav-link i { font-size: 18px; margin-bottom: 4px; display: block; }
-        
-        /* Specialized Home Button in Center */
-        .nav-home {
-            position: relative;
-            top: -20px;
-            background: var(--btn-blue);
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
+        body {
+            background-color: var(--dark-bg);
+            height: 100vh;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 0 20px rgba(0, 162, 255, 0.5);
-            border: 4px solid var(--bg-dark);
-            color: white !important;
-            transform: scale(1.1);
-        }
-        .nav-home i { font-size: 24px !important; margin-bottom: 2px !important; }
-        .active { color: var(--accent-blue); }
-        
-        /* Modals */
-        #sectionModal, #section3DModal, #paymentModal { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.8); z-index: 3000; align-items: flex-end; 
-        }
-        /* Wallet Modal Center */
-        #paymentModal { align-items: center; justify-content: center; padding: 20px; }
-
-        .modal-box { 
-            background: #001a35; width: 100%; padding: 25px 20px; 
-            border-top-left-radius: 25px; border-top-right-radius: 25px; 
-            border-top: 2px solid var(--accent-blue); 
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* Wallet Specific Styles */
-        .modal-content { background: #003366; width: 100%; max-width: 400px; border-radius: 15px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .balance-card-mini { background: linear-gradient(135deg, #003366, #004080); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .action-grid-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .action-btn-mini { background: #001f3f; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
-        .admin-num-box { background: #001226; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; border: 1px dashed var(--accent); }
-        .copy-btn { background: rgba(24,144,255,0.2); border: none; color: var(--accent); padding: 5px 12px; border-radius: 5px; cursor: pointer; margin-left: 10px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: #001f3f; color: white; font-size: 16px; outline: none; }
-        
-        /* Submit Button with Loading Style */
-        .submit-btn { 
-            width: 100%; padding: 14px; border-radius: 8px; border: none; 
-            background: var(--accent); color: white; font-weight: bold; 
-            cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
-        }
-        .submit-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.8; }
-        .btn-loader { 
-            width: 18px; height: 18px; border: 2px solid #ffffff66; 
-            border-top-color: white; border-radius: 50%; 
-            animation: spin 0.8s linear infinite; display: none;
+            overflow: hidden;
+            color: white;
         }
 
-        .close-btn { width: 100%; padding: 10px; margin-top: 10px; background: transparent; color: var(--dim); border: none; cursor: pointer; }
+        /* Animated Background Particles */
+        .bg-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: var(--neon-blue);
+            filter: blur(150px);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.2;
+            animation: move 10s infinite alternate;
+        }
 
-        .section-btn { 
-            display: block; width: 100%; padding: 16px; margin-bottom: 12px; 
-            background: var(--btn-blue); color: white; text-align: center; 
-            border-radius: 12px; font-weight: bold; border: none; font-size: 16px; 
+        @keyframes move {
+            from { transform: translate(-50%, -50%); }
+            to { transform: translate(50%, 50%); }
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Hexagon Icon Design */
+        .icon-wrapper {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hex-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 242, 254, 0.1);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            border: 2px solid var(--neon-blue);
+            animation: pulse 2s infinite;
+        }
+
+        .icon-wrapper i {
+            font-size: 50px;
+            color: var(--neon-blue);
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+        }
+
+        /* Glitch Effect Text */
+        .glitch {
+            font-size: 32px;
+            font-weight: 900;
+            text-transform: uppercase;
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+                        -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+                        0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+            animation: glitch 500ms infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glitch {
+            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,.75), -0.05em -0.025em 0 rgba(0,255,0,.75), -0.025em 0.05em 0 rgba(0,0,255,.75); }
+            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,.75), -0.05em -0.025em 0 rgba(0,255,0,.75), -0.025em 0.05em 0 rgba(0,0,255,.75); }
+            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,.75), 0.025em 0.025em 0 rgba(0,255,0,.75), -0.05em -0.05em 0 rgba(0,0,255,.75); }
+            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,.75), 0.025em 0.025em 0 rgba(0,255,0,.75), -0.05em -0.05em 0 rgba(0,0,255,.75); }
+            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,.75), 0.05em 0 0 rgba(0,255,0,.75), 0 -0.05em 0 rgba(0,0,255,.75); }
+            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,.75), 0.05em 0 0 rgba(0,255,0,.75), 0 -0.05em 0 rgba(0,0,255,.75); }
+            100% { text-shadow: -0.025em 0 0 rgba(255,0,0,.75), -0.025em -0.025em 0 rgba(0,255,0,.75), -0.025em -0.05em 0 rgba(0,0,255,.75); }
+        }
+
+        .desc {
+            color: #80d4ff;
+            font-size: 14px;
+            max-width: 300px;
+            margin: 0 auto 40px;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+        }
+
+        /* Scanning Line */
+        .scan-line {
+            width: 200px;
+            height: 2px;
+            background: var(--neon-blue);
+            margin: 20px auto;
+            position: relative;
+            box-shadow: 0 0 15px var(--neon-blue);
+            animation: scan 2s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: scaleX(0); opacity: 0; }
+            50% { transform: scaleX(1); opacity: 1; }
+            100% { transform: scaleX(0); opacity: 0; }
+        }
+
+        .btn-contact {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 25px;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            text-transform: uppercase;
+            transition: 0.3s;
+            background: rgba(0, 242, 254, 0.05);
+        }
+
+        .btn-contact:hover {
+            background: var(--neon-blue);
+            color: black;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.5; }
         }
     </style>
 </head>
 <body>
-    <div id="page-loader"><div class="spinner"></div><p style="margin-top: 15px; color: var(--accent-blue);">ဒေတာများ ရယူနေပါသည်...</p></div>
 
-    <header>
-        <div class="logo">LB 556</div>
-        <div class="user-balance">
-            <div id="uName" style="font-size: 11px; color: #aaa;">---</div>
-            <div style="font-weight: bold; color: white;"><span id="uBalance">0</span> <i class="fa-solid fa-circle-dollar-to-slot" style="color: var(--accent-blue); margin-left: 5px;"></i></div>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <div class="icon-wrapper">
+            <div class="hex-bg"></div>
+            <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <button class="deposit-btn" onclick="window.location.href='help.html'"><i class="fa-solid fa-headset"></i> အကူအညီ</button>
-    </header>
 
-    <div class="promo-banner">
-        <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/IMG_20260214_114528_306.jpg" alt="MMK 2D Promo">
-    </div>
-
-    <div class="marquee-box"><marquee scrollamount="5">🙏 Lucky Boss 556 မှ ကြိုဆိုပါတယ် ။ ယုံကြည်စိတ်ချစွာ ကစားနိုင်ပါပြီ ⚡</marquee></div>
-
-    <main class="game-grid">
-        <div class="game-card" onclick="window.location.href='th2d.html'">
-            <div class="game-title">MM 2D</div>
-            <img src="https://image2url.com/r2/default/images/1774380406199-ed2c9dd1-2493-4ca8-a353-39736ebf463f.png">
-        </div>
+        <h1 class="glitch">SYSTEM HOSTING</h1>
         
-        <div class="game-card" onclick="window.location.href='th3d.html'">
-    <div class="game-title">MM 3D</div>
-    <img src="https://image2url.com/r2/default/images/1774380477389-3ea3aede-496a-4a3d-82c2-c541fc5706cb.png">
-</div>
+        <p class="desc">ကျွန်ုပ်တို့ဧ။်ဆာဗာကိုစတင် Hosting ပြုလုပ်နေပါပြီ ခေတ္တစောင့်ဆိုင်းပေးပါ</p>
 
-        <div class="game-card" onclick="openWalletModal()">
-            <div class="game-title">ငွေသွင်း/ငွေထုတ်</div>
-            <img src="https://image2url.com/r2/default/images/1774380518128-d6818780-9193-4472-9134-ff0b222d34bb.png">
-        </div>
+        <div class="scan-line"></div>
 
-        <div class="game-card" onclick="window.location.href='two_history.html'">
-            <div class="game-title">ထိုးကြေးမှတ်တမ်း</div>
-            <img src="https://image2url.com/r2/default/images/1774380562486-392a8802-e03b-4e50-9b1d-021603551437.png">
-        </div>
+        <a href="https://t.me/thitsarshin009" class="btn-contact">
+            <i class="fa-brands fa-telegram"></i> Contact Support
+        </a>
 
-        <div class="game-card" onclick="window.location.href='transaction_history.html'">
-            <div class="game-title">ငွေသွင်း/ထုတ်မှတ်တမ်း</div>
-            <img src="https://raw.githubusercontent.com/zaybann/mmkgame/refs/heads/main/Pay%20history.png">
-        </div>
-    </main>
-
-    <div id="paymentModal" class="modal" onclick="closeWalletModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <h3 id="modalTitle" style="text-align:center; margin-bottom:15px; color: white;">ငွေအိတ် (Wallet)</h3>
-            
-            <div class="balance-card-mini">
-                <div style="font-size: 12px; color: var(--dim); margin-bottom: 5px;">လက်ရှိလက်ကျန်ငွေ (Ks)</div>
-                <div style="font-size: 24px; font-weight: bold; color: white;" id="modal-user-balance">0</div>
-            </div>
-
-            <div class="action-grid-mini" id="wallet-action-buttons">
-                <div class="action-btn-mini" onclick="setWalletMode('deposit')">
-                    <i class="fas fa-arrow-circle-down" style="color: var(--green);"></i>
-                    <span style="font-size: 12px; color: white;">ငွေသွင်းရန်</span>
-                </div>
-                <div class="action-btn-mini" onclick="setWalletMode('withdraw')">
-                    <i class="fas fa-arrow-circle-up" style="color: var(--red);"></i>
-                    <span style="font-size: 12px; color: white;">ငွေထုတ်ရန်</span>
-                </div>
-            </div>
-
-            <div id="wallet-form-section" style="display:none;">
-                <div id="admin-num-display" class="admin-num-box" style="display:none;">
-                    <p style="font-size: 11px; color: var(--dim); margin-bottom: 5px;">အောက်ပါနံပါတ်သို့ ငွေလွှဲပါ (Copy ကူးရန် နှိပ်ပါ)</p>
-                    <div style="display: flex; align-items: center; justify-content: center;">
-                        <b id="admin-phone" style="font-size: 18px; color: var(--accent);">စောင့်ဆိုင်းပါ...</b>
-                        <button type="button" class="copy-btn" onclick="copyAdminNum()"><i class="fas fa-copy"></i></button>
-                    </div>
-                </div>
-
-                <form id="paymentForm">
-                    <select id="method" required onchange="updateAdminPhone()">
-                        <option value="KPay">KPay</option>
-                        <option value="WavePay">WavePay</option>
-                    </select>
-                    <input type="number" id="amount" placeholder="ပမာဏ" required min="1000">
-                    <input type="text" id="phone" placeholder="သင့်ဖုန်းနံပါတ်" required>
-                    <div id="deposit-only-fields">
-                        <input type="text" id="transactionId" placeholder="လုပ်ငန်းစဉ်အမှတ် (နောက်ဆုံး ၆ လုံး)">
-                    </div>
-                    <button type="submit" class="submit-btn" id="submitPaymentBtn">
-                        <span class="btn-loader" id="btnLoader"></span>
-                        <span id="btnLabel">တင်ပြမည်</span>
-                    </button>
-                </form>
-                <button class="close-btn" onclick="resetWalletModal()">ပြန်ဆုတ်မည်</button>
-            </div>
-            <button class="close-btn" onclick="closeWalletModal()">ပိတ်မည်</button>
-        </div>
-    </div>
-    
-    <div id="section3DModal" onclick="toggle3DModal(false)">
-        <div class="modal-box" onclick="event.stopPropagation()">
-            <h3 style="margin-bottom: 20px; text-align: center;">3D ထီထိုးခြင်း</h3>
-            <button onclick="goTo3D()" class="section-btn">3D ထိုးမည်</button>
+        <div style="margin-top: 50px; font-size: 10px; color: #444; letter-spacing: 3px;">
+            LUCKY BOSS 556
         </div>
     </div>
 
-    <nav class="footer-nav">
-        <a onclick="openWalletModal()" class="nav-link">
-            <i class="fa-solid fa-wallet"></i>
-            <div>ငွေသွင်း/ထုတ်</div>
-        </a>
-        <a href="two_history.html" class="nav-link">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <div>မှတ်တမ်း</div>
-        </a>
-        
-        <a href="index.html" class="nav-link nav-home active">
-            <i class="fa-solid fa-house"></i>
-            <div>ပင်မ</div>
-        </a>
-
-        <a href="help.html" class="nav-link">
-            <i class="fa-solid fa-circle-question"></i>
-            <div>အကူအညီ</div>
-        </a>
-        <a href="#" class="nav-link" id="btnLogout">
-            <i class="fa-solid fa-power-off"></i>
-            <div>ထွက်ရန်</div>
-        </a>
-    </nav>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, addDoc, updateDoc, increment, collection, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
-        authDomain: "twod-aa6c1.firebaseapp.com",
-        projectId: "twod-aa6c1",
-        storageBucket: "twod-aa6c1.appspot.com",
-        messagingSenderId: "674076613631",
-        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let sectionStatus = { section_12: true, section_04: true, section_3d: true };
-    let currentUser = null;
-    let walletMode = 'deposit';
-    let adminSettings = { kpay: "", wave: "" };
-
-    // --- Back Button Handling Logic ---
-    window.addEventListener('popstate', function (event) {
-        const paymentModal = document.getElementById('paymentModal');
-        const sectionModal = document.getElementById('sectionModal');
-        const section3DModal = document.getElementById('section3DModal');
-
-        if (paymentModal.style.display === 'flex') {
-            const formSection = document.getElementById('wallet-form-section');
-            if (formSection.style.display === 'block') {
-                resetWalletModal();
-            } else {
-                closeWalletModal();
-            }
-            history.pushState(null, null, window.location.pathname);
-        } 
-        else if (sectionModal.style.display === 'flex') {
-            toggleModal(false);
-            history.pushState(null, null, window.location.pathname);
-        }
-        else if (section3DModal.style.display === 'flex') {
-            toggle3DModal(false);
-            history.pushState(null, null, window.location.pathname);
-        }
-    });
-
-    async function fetchAdminNumbers() {
-        const snap = await getDoc(doc(db, "settings", "payments"));
-        if (snap.exists()) adminSettings = snap.data();
-    }
-
-    onSnapshot(doc(db, "settings", "time_control"), (docSnap) => {
-        if (docSnap.exists()) sectionStatus = docSnap.data();
-    });
-
-    onAuthStateChanged(auth, (user) => {
-        const loader = document.getElementById('page-loader');
-        if (user) {
-            currentUser = user;
-            fetchAdminNumbers();
-            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const balanceFormatted = data.balance.toLocaleString();
-                    document.getElementById('uName').innerText = data.name;
-                    document.getElementById('uBalance').innerText = balanceFormatted;
-                    document.getElementById('modal-user-balance').innerText = balanceFormatted;
-                }
-                loader.style.display = 'none';
-            });
-        } else { window.location.href = "auth.html"; }
-    });
-
-    window.openWalletModal = () => {
-        history.pushState(null, null, window.location.pathname);
-        document.getElementById('paymentModal').style.display = 'flex';
-        resetWalletModal();
-    };
-
-    window.closeWalletModal = () => {
-        document.getElementById('paymentModal').style.display = 'none';
-    };
-
-    window.resetWalletModal = () => {
-        document.getElementById('wallet-action-buttons').style.display = 'grid';
-        document.getElementById('wallet-form-section').style.display = 'none';
-        document.getElementById('modalTitle').innerText = 'ငွေအိတ် (Wallet)';
-        document.getElementById('paymentForm').reset();
-        
-        // Button reset (Error ဖြစ်ခဲ့ရင် ပြန်ပြင်ဖို့)
-        const btn = document.getElementById('submitPaymentBtn');
-        btn.disabled = false;
-        document.getElementById('btnLoader').style.display = 'none';
-        document.getElementById('btnLabel').innerText = 'တင်ပြမည်';
-    };
-
-    window.setWalletMode = (mode) => {
-        history.pushState(null, null, window.location.pathname);
-        walletMode = mode;
-        document.getElementById('wallet-action-buttons').style.display = 'none';
-        document.getElementById('wallet-form-section').style.display = 'block';
-        document.getElementById('modalTitle').innerText = (mode === 'deposit') ? 'ငွေသွင်းမည်' : 'ငွေထုတ်မည်';
-        document.getElementById('deposit-only-fields').style.display = (mode === 'deposit') ? 'block' : 'none';
-        document.getElementById('admin-num-display').style.display = (mode === 'deposit') ? 'block' : 'none';
-        if(mode === 'deposit') updateAdminPhone();
-    };
-
-    window.updateAdminPhone = () => {
-        const method = document.getElementById('method').value;
-        document.getElementById('admin-phone').innerText = (method === 'KPay') ? adminSettings.kpay : adminSettings.wave;
-    };
-
-    window.copyAdminNum = () => {
-        const phoneNum = document.getElementById('admin-phone').innerText;
-        navigator.clipboard.writeText(phoneNum).then(() => {
-            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copy ကူးပြီးပါပြီ', showConfirmButton: false, timer: 1500 });
-        });
-    };
-
-    document.getElementById('paymentForm').onsubmit = async (e) => {
-        e.preventDefault();
-        
-        const btn = document.getElementById('submitPaymentBtn');
-        const loader = document.getElementById('btnLoader');
-        const label = document.getElementById('btnLabel');
-        const amt = parseInt(document.getElementById('amount').value);
-        const curBal = parseInt(document.getElementById('modal-user-balance').innerText.replace(/,/g, ''));
-
-        if (walletMode === 'withdraw' && amt > curBal) return Swal.fire("အမှား", "လက်ကျန်ငွေမလုံလောက်ပါ", "error");
-
-        // ၁။ ခလုတ်ကို ပိတ်ပြီး Loading ပြခြင်း
-        btn.disabled = true;
-        loader.style.display = 'block';
-        label.innerText = 'လုပ်ဆောင်နေသည်...';
-
-        try {
-            await addDoc(collection(db, "transactions"), {
-                uid: currentUser.uid,
-                userEmail: currentUser.email,
-                phone: document.getElementById('phone').value,
-                amount: amt,
-                method: document.getElementById('method').value,
-                type: walletMode,
-                transactionId: (walletMode === 'deposit') ? document.getElementById('transactionId').value : 'Withdrawal Request',
-                status: 'pending',
-                timestamp: serverTimestamp()
-            });
-
-            if (walletMode === 'withdraw') {
-                await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(-amt) });
-            }
-
-            closeWalletModal();
-            Swal.fire("အောင်မြင်သည်", (walletMode === 'withdraw') ? "ငွေထုတ်ယူမှု တင်ပြပြီးပါပြီ။" : "ငွေသွင်းမှု တင်ပြပြီးပါပြီ။", "success");
-        } catch (err) { 
-            Swal.fire("Error", "မအောင်မြင်ပါ၊ ပြန်လည်ကြိုးစားပါ။", "error"); 
-            // Error ဖြစ်ရင် ခလုတ်ပြန်ဖွင့်ပေးခြင်း
-            btn.disabled = false;
-            loader.style.display = 'none';
-            label.innerText = 'တင်ပြမည်';
-        }
-    };
-
-    window.goToSection = (page, name) => {
-        if (sectionStatus[name]) {
-            window.location.href = page;
-        } else {
-            Swal.fire({ title: "ထိုးချိန်ပြည့်ပါပြီ", text: "ဤအချိန်ပိုင်းအား ခေတ္တပိတ်ထားပါသည်။", icon: "error", confirmButtonColor: "#007bff", background: "#002d5a", color: "#fff" });
-        }
-    };
-
-    document.getElementById('btnLogout').onclick = () => { 
-        Swal.fire({
-            title: 'အကောင့်ထွက်မှာ သေချာပြီလား?',
-            text: "ပြန်ဝင်လိုပါက ဖုန်းနံပါတ်နှင့် စကားဝှက် ပြန်ရိုက်ရပါမည်။",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#007bff',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'ထွက်မည်',
-            cancelButtonText: 'မထွက်တော့ပါ',
-            background: '#002d5a',
-            color: '#fff'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                signOut(auth).then(() => { 
-                    window.location.href = "auth.html"; 
-                });
-            }
-        });
-    };
-
-    window.toggleModal = (s) => { 
-        if(s) history.pushState(null, null, window.location.pathname);
-        document.getElementById('sectionModal').style.display = s ? 'flex' : 'none'; 
-    };
-    window.toggle3DModal = (s) => { 
-        if(s) history.pushState(null, null, window.location.pathname);
-        document.getElementById('section3DModal').style.display = s ? 'flex' : 'none'; 
-    };
-</script>
 </body>
 </html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ကိုယ်ရေးအချက်အလက် - LB 556</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000b18; 
+            --bg-card: rgba(0, 51, 102, 0.5); 
+            --accent-blue: #00a2ff; 
+            --white: #ffffff; 
+            --red: #ff4d4f;
+            --btn-blue: linear-gradient(135deg, #007bff, #0056b3);
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        
+        body { 
+            background: radial-gradient(circle at top, #001f3f, #000b18);
+            color: var(--white); 
+            min-height: 100vh;
+            padding-bottom: 30px;
+        }
+
+        /* Loading Box */
+        #page-loader { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 11, 24, 0.6); backdrop-filter: blur(3px);
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
+        }
+        .loading-box {
+            background: #001f3f; padding: 30px 50px; border-radius: 15px;
+            border: 1px solid var(--accent-blue); text-align: center;
+        }
+        .spinner { 
+            width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); 
+            border-top: 3px solid var(--accent-blue); border-radius: 50%; 
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Header */
+        .header {
+            display: flex; align-items: center; padding: 15px;
+            background: rgba(0, 11, 24, 0.8); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 162, 255, 0.2);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .back-btn { color: white; text-decoration: none; font-size: 20px; width: 40px; cursor: pointer; }
+        .header-title { flex-grow: 1; text-align: center; font-size: 18px; font-weight: bold; margin-right: 40px; }
+
+        .container { padding: 20px; }
+
+        /* Profile Card */
+        .profile-card {
+            background: var(--bg-card); border-radius: 20px;
+            padding: 25px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .avatar-circle {
+            width: 80px; height: 80px; background: var(--btn-blue);
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 15px;
+            font-size: 35px; border: 3px solid var(--accent-blue);
+        }
+        .profile-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .profile-phone { color: #aaa; font-size: 16px; margin-bottom: 15px; letter-spacing: 1px; }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex; background: rgba(0,0,0,0.3);
+            border-radius: 12px; padding: 15px;
+            margin-top: 10px;
+        }
+        .stat-item { flex: 1; text-align: center; }
+        .stat-item:first-child { border-right: 1px solid rgba(255,255,255,0.1); }
+        .stat-label { font-size: 11px; color: #aaa; margin-bottom: 5px; }
+        .stat-value { font-size: 16px; font-weight: bold; color: var(--accent-blue); }
+
+        /* Menu List */
+        .menu-list { background: var(--bg-card); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+        .menu-item {
+            display: flex; align-items: center; padding: 16px 20px;
+            color: white; text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: 0.2s;
+        }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: rgba(255,255,255,0.1); }
+        .menu-item i { width: 30px; font-size: 18px; color: var(--accent-blue); }
+        .menu-item span { flex-grow: 1; font-size: 15px; }
+        .menu-item .fa-chevron-right { font-size: 12px; color: #555; width: auto; }
+
+        .logout-btn {
+            margin-top: 30px; width: 100%; padding: 15px;
+            background: rgba(255, 77, 79, 0.1); color: var(--red);
+            border: 1px solid rgba(255, 77, 79, 0.3);
+            border-radius: 12px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="page-loader">
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <p style="color: var(--accent-blue); font-size: 14px;">ခေတ္တစောင့်ပါ...</p>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="back-btn" onclick="window.location.href='index.html'"><i class="fas fa-chevron-left"></i></div>
+        <div class="header-title">အကောင့်</div>
+    </div>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="avatar-circle"><i class="fas fa-user"></i></div>
+            <div class="profile-name" id="pName">---</div>
+            <div class="profile-phone" id="pPhone">---</div>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-label">လက်ကျန်ငွေ</div>
+                    <div class="stat-value"><span id="pBalance">0</span> Ks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">အဆင့်</div>
+                    <div class="stat-value">Member</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-list">
+            <a href="wallet.html" class="menu-item">
+                <i class="fas fa-wallet"></i>
+                <span>ပိုက်ဆံအိတ် (ငွေသွင်း/ထုတ်)</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <a href="two_history.html" class="menu-item">
+                <i class="fas fa-history"></i>
+                <span>ထိုးကြေးမှတ်တမ်း</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            <a href="transaction_history.html" class="menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>ငွေသွင်း/ထုတ်မှတ်တမ်း</span>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <button class="logout-btn" id="btnLogout">
+            <i class="fas fa-sign-out-alt"></i> အကောင့်မှ ထွက်ရန်
+        </button>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+        const loader = document.getElementById('page-loader');
+        if (user) {
+            // Email ထဲကနေ ဖုန်းနံပါတ်ပဲ ဖြတ်ယူခြင်း (e.g. 09123456789@mmk.com -> 09123456789)
+            const fullEmail = user.email || "";
+            const phoneNumber = fullEmail.split('@')[0];
+            document.getElementById('pPhone').innerText = "📞 " + phoneNumber;
+            
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('pName').innerText = data.name;
+                    document.getElementById('pBalance').innerText = data.balance.toLocaleString();
+                }
+                loader.style.display = 'none';
+            });
+        } else {
+            window.location.href = "auth.html";
+        }
+    });
+
+    document.getElementById('btnLogout').onclick = () => {
+        Swal.fire({
+            title: 'အကောင့်ထွက်မှာ သေချာပြီလား?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4d4f',
+            cancelButtonColor: '#007bff',
+            confirmButtonText: 'ထွက်မည်',
+            cancelButtonText: 'မထွက်တော့ပါ',
+            background: '#002d5a', color: '#fff'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                signOut(auth).then(() => { window.location.href = "auth.html"; });
+            }
+        });
+    };
+</script>
+</body>
+</html>

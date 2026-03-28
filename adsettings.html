@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ငွေပေးချေမှု နံပါတ်များ ပြင်ဆင်ရန်</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000810; 
+            --card-bg: #00162b;
+            --accent: #00a2ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+            --border: rgba(0, 162, 255, 0.2);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pyidaungsu', 'Segoe UI', sans-serif; }
+        
+        body { 
+            background: var(--bg-dark); 
+            color: var(--white); 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+
+        /* Loading Box သီးသန့်ပြရန် */
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 8, 16, 0.95); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader-box {
+            background: var(--card-bg); padding: 30px; border-radius: 20px;
+            border: 1px solid var(--accent); text-align: center;
+            box-shadow: 0 0 20px rgba(0, 162, 255, 0.2);
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header */
+        .header { 
+            display: flex; align-items: center; justify-content: center;
+            max-width: 450px; margin: 0 auto 30px; position: relative;
+        }
+        .back-btn { 
+            color: white; text-decoration: none; position: absolute; left: 0;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: var(--card-bg); border-radius: 50%; border: 1px solid var(--border);
+        }
+
+        .container { width: 100%; max-width: 450px; margin: 0 auto; }
+
+        /* Input Card */
+        .card { 
+            background: var(--card-bg); border-radius: 25px; padding: 30px 20px; 
+            border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+
+        .input-group { margin-bottom: 25px; }
+        .input-group label { 
+            display: block; font-size: 14px; color: var(--accent); margin-bottom: 10px; font-weight: bold;
+        }
+        .input-box {
+            position: relative; display: flex; align-items: center;
+        }
+        .input-box i { position: absolute; left: 15px; color: var(--text-dim); }
+        .input-box input { 
+            width: 100%; padding: 15px 15px 15px 45px; border-radius: 12px; 
+            background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+            color: white; font-size: 16px; outline: none; transition: 0.3s;
+        }
+        .input-box input:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0, 162, 255, 0.2); }
+
+        /* Save Button */
+        .btn-save { 
+            width: 100%; padding: 16px; border-radius: 12px; border: none;
+            background: var(--accent); color: white; font-weight: bold; 
+            font-size: 16px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-save:hover { background: #008be2; }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <p style="color: var(--white); font-size: 14px;">အချက်အလက်များ ဆွဲယူနေပါသည်...</p>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>ဖုန်းနံပါတ် ပြင်ဆင်ရန်</h2>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            
+            <div class="input-group">
+                <label>Kpay နံပါတ် (ငွေလက်ခံမည့်ဖုန်း)</label>
+                <div class="input-box">
+                    <i class="fas fa-wallet"></i>
+                    <input type="tel" id="kpay-num" placeholder="၀၉xxxxxxxxx">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Wave နံပါတ် (ငွေလက်ခံမည့်ဖုန်း)</label>
+                <div class="input-box">
+                    <i class="fas fa-phone"></i>
+                    <input type="tel" id="wave-num" placeholder="၀၉xxxxxxxxx">
+                </div>
+            </div>
+
+            <button class="btn-save" onclick="updatePaymentNumbers()">
+                <i class="fas fa-save"></i> အချက်အလက် သိမ်းဆည်းမည်
+            </button>
+
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const loader = document.getElementById('loadingScreen');
+
+    // ဒေတာ ရမှသာ Loading ပိတ်မည့် အပိုင်း
+    async function loadCurrentPaymentNumbers() {
+        try {
+            // Loading ကို အရင်ပြထားမည်
+            loader.style.display = "flex";
+
+            const snap = await getDoc(doc(db, "settings", "payments"));
+            
+            if (snap.exists()) {
+                document.getElementById('kpay-num').value = snap.data().kpay || "";
+                document.getElementById('wave-num').value = snap.data().wave || "";
+            }
+
+            // ဒေတာ ရောက်လာပြီဖြစ်၍ Loading ပိတ်လိုက်မည်
+            loader.style.opacity = "0";
+            setTimeout(() => { loader.style.display = "none"; }, 500);
+
+        } catch (e) {
+            console.error(e);
+            loader.style.display = "none"; // Error ဖြစ်လျှင်လည်း ပိတ်ပေးမည်
+            Swal.fire({ icon: 'error', title: 'အမှား', text: 'ဒေတာ ဆွဲယူ၍ မရပါ', background: '#00162b', color: '#fff' });
+        }
+    }
+
+    // ဒေတာ အသစ်သိမ်းဆည်းခြင်း
+    window.updatePaymentNumbers = async () => {
+        const kpay = document.getElementById('kpay-num').value.trim();
+        const wave = document.getElementById('wave-num').value.trim();
+
+        if(!kpay || !wave) {
+            return Swal.fire({ icon: "warning", title: "သတိပေးချက်", text: "နံပါတ်များ ပြည့်စုံစွာ ဖြည့်ပါ", background: '#00162b', color: '#fff' });
+        }
+
+        // သိမ်းဆည်းနေစဉ် Loading ပြမည်
+        loader.style.display = "flex";
+        loader.style.opacity = "1";
+
+        try {
+            await setDoc(doc(db, "settings", "payments"), { kpay, wave }, { merge: true });
+            Swal.fire({
+                icon: "success", title: "အောင်မြင်သည်", text: "အချက်အလက်များ သိမ်းဆည်းပြီးပါပြီ",
+                background: '#00162b', color: '#fff', timer: 1500, showConfirmButton: false
+            });
+        } catch (e) {
+            Swal.fire({ icon: "error", title: "အမှား", text: e.message, background: '#00162b', color: '#fff' });
+        } finally {
+            // သိမ်းပြီးလျှင် Loading ပြန်ပိတ်မည်
+            loader.style.opacity = "0";
+            setTimeout(() => { loader.style.display = "none"; }, 500);
+        }
+    };
+
+    loadCurrentPaymentNumbers();
+</script>
+</body>
+</html>

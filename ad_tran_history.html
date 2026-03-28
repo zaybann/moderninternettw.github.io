@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Management - MMK 2D</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root { 
+            --bg-dark: #000810; 
+            --card-bg: #001e36;
+            --accent: #00a2ff; 
+            --white: #ffffff; 
+            --text-dim: #a6adb4;
+            --danger: #ff4d4f;
+            --success: #52c41a;
+            --border: rgba(255,255,255,0.06);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
+        
+        body { 
+            background: var(--bg-dark); 
+            color: var(--white); 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+
+        .header { 
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto; 
+            position: relative; padding: 10px 0;
+        }
+        .back-btn { 
+            color: white; text-decoration: none; font-size: 18px; 
+            position: absolute; left: 0;
+            width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+            background: var(--card-bg); border-radius: 50%; border: 1px solid var(--border);
+        }
+        .header h2 { color: var(--accent); font-size: 19px; font-weight: 600; }
+
+        .container { width: 100%; max-width: 600px; margin: 0 auto; }
+
+        .tab-box { 
+            display: flex; background: var(--card-bg); border-radius: 30px; 
+            margin-bottom: 25px; border: 1px solid var(--border); overflow: hidden;
+            padding: 5px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .tab { 
+            flex: 1; padding: 12px; text-align: center; cursor: pointer; 
+            font-size: 14px; font-weight: bold; color: var(--text-dim); transition: 0.3s;
+            border-radius: 25px;
+        }
+        .tab.active { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(0, 162, 255, 0.3); }
+
+        .req-item { 
+            background: var(--card-bg); border-radius: 20px; padding: 20px; 
+            margin-bottom: 18px; border: 1px solid var(--border);
+            animation: fadeIn 0.4s ease-out;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        .req-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .req-user { font-weight: bold; font-size: 16px; color: var(--white); display: flex; align-items: center; gap: 10px; }
+        .req-user i { color: var(--accent); font-size: 18px; }
+        .req-method { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(0, 162, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 162, 255, 0.2); font-weight: bold; }
+
+        .details-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; margin-bottom: 15px;
+        }
+        .detail-p { font-size: 12px; color: var(--text-dim); }
+        .detail-p b { color: var(--white); display: block; margin-top: 2px; font-size: 13px; }
+
+        .req-amount-box { text-align: center; margin: 15px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 0; }
+        .req-amount { font-size: 26px; font-weight: 800; color: var(--white); letter-spacing: 0.5px; }
+        .req-amount span { font-size: 14px; color: var(--text-dim); font-weight: normal; margin-left: 5px; }
+
+        .req-time { font-size: 11px; color: #5c6b7a; text-align: right; margin-bottom: 15px; }
+
+        .action-btns { display: flex; gap: 12px; }
+        .btn { flex: 1; border: none; padding: 14px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 14px; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-approve { background: var(--success); }
+        .btn-reject { background: rgba(255, 77, 79, 0.1); color: var(--danger); border: 1px solid rgba(255, 77, 79, 0.3); }
+        .btn:active { transform: scale(0.97); }
+
+        .empty-msg { text-align: center; padding: 80px 0; color: var(--text-dim); font-size: 14px; }
+
+        #loadingScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 8, 16, 0.8); backdrop-filter: blur(10px);
+            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader-box { background: var(--card-bg); padding: 30px 50px; border-radius: 20px; text-align: center; border: 1px solid var(--accent); }
+        .loader { width: 35px; height: 35px; border: 3px solid rgba(255,255,255,0.1); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; display: inline-block; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen">
+        <div class="loader-box">
+            <div class="loader"></div>
+            <p style="margin-top: 15px; font-size: 13px; color: var(--text-dim);">ဒေတာများ ဆွဲယူနေပါသည်...</p>
+        </div>
+    </div>
+
+    <div class="header">
+        <a href="adhome.html" class="back-btn"><i class="fas fa-chevron-left"></i></a>
+        <h2>Wallet Management</h2>
+    </div>
+
+    <div class="container">
+        <div class="tab-box">
+            <div class="tab active" id="tabDeposit" onclick="switchTab('deposit')">ငွေသွင်း (Deposit)</div>
+            <div class="tab" id="tabWithdraw" onclick="switchTab('withdraw')">ငွေထုတ် (Withdraw)</div>
+        </div>
+
+        <div id="transArea">
+            <div class="empty-msg">ဒေတာများ ဆွဲယူနေပါသည်...</div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentTab = 'deposit';
+    let unsubscribe = null;
+    const loader = document.getElementById('loadingScreen');
+
+    window.switchTab = (type) => {
+        if(currentTab === type) return;
+        loader.style.display = 'flex';
+        currentTab = type;
+        document.getElementById('tabDeposit').classList.toggle('active', type === 'deposit');
+        document.getElementById('tabWithdraw').classList.toggle('active', type === 'withdraw');
+        loadTransactions();
+        setTimeout(() => { loader.style.display = 'none'; }, 400);
+    };
+
+    async function loadTransactions() {
+        if (unsubscribe) unsubscribe();
+
+        // Index Error မတက်အောင် orderBy ကို ဖြုတ်ထားပြီး query လုပ်ပါသည်
+        const q = query(
+            collection(db, "transactions"), 
+            where("status", "==", "pending"), 
+            where("type", "==", currentTab)
+        );
+
+        unsubscribe = onSnapshot(q, async (snapshot) => {
+            const area = document.getElementById('transArea');
+            
+            if (snapshot.empty) {
+                area.innerHTML = `<div class="empty-msg">ယခုအချိန်တွင် ${currentTab === 'deposit' ? 'ငွေသွင်း' : 'ငွေထုတ်'} တောင်းဆိုမှု မရှိပါ။</div>`;
+                return;
+            }
+
+            // JavaScript ဘက်ကနေ အချိန်အလိုက် (Timestamp) စီပေးခြင်း (အသစ်ဆုံးက အောက်ဆုံးရောက်မည်)
+            const sortedDocs = snapshot.docs.sort((a, b) => {
+                const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
+                const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
+                return timeA - timeB;
+            });
+
+            area.innerHTML = ""; // List ကို ရှင်းထုတ်မည်
+
+            for (const docSnap of sortedDocs) {
+                const d = docSnap.data();
+                const dateObj = d.timestamp ? new Date(d.timestamp.seconds * 1000) : new Date();
+                const timeStr = dateObj.toLocaleString();
+                
+                let uName = d.userName || "အမည်မသိ";
+                if ((uName === "အမည်မသိ" || uName === "User") && d.uid) {
+                    try {
+                        const uDoc = await getDoc(doc(db, "users", d.uid));
+                        if (uDoc.exists()) uName = uDoc.data().name;
+                    } catch(e) { console.error(e); }
+                }
+
+                const idLabel = d.type === 'deposit' ? 'Trans ID' : 'အကောင့်နံပါတ်';
+                const idVal = d.transactionId || d.accountNo || '-';
+
+                area.innerHTML += `
+                    <div class="req-item">
+                        <div class="req-info">
+                            <span class="req-user"><i class="fas fa-user-circle"></i> ${uName}</span>
+                            <span class="req-method">${d.method}</span>
+                        </div>
+                        <div class="details-grid">
+                            <div class="detail-p">ဖုန်းနံပါတ် <b>${d.phone}</b></div>
+                            <div class="detail-p">${idLabel} <b>${idVal}</b></div>
+                        </div>
+                        <div class="req-amount-box">
+                            <div class="req-amount">${Number(d.amount).toLocaleString()}<span>Ks</span></div>
+                        </div>
+                        <div class="req-time"><i class="far fa-clock"></i> ${timeStr}</div>
+                        <div class="action-btns">
+                            <button class="btn btn-reject" onclick="handleRequest('${docSnap.id}', 'reject', '${d.type}', '${d.uid}', ${d.amount})">
+                                <i class="fas fa-times"></i> ပယ်ဖျက်
+                            </button>
+                            <button class="btn btn-approve" onclick="handleRequest('${docSnap.id}', 'approve', '${d.type}', '${d.uid}', ${d.amount})">
+                                <i class="fas fa-check"></i> လက်ခံမည်
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }, (error) => {
+            console.error("Firestore Error:", error);
+            area.innerHTML = `<div class="empty-msg">Error: ${error.message}</div>`;
+        });
+    }
+
+    window.handleRequest = async (id, action, type, uid, amount) => {
+        const confirmResult = await Swal.fire({
+            title: action === 'approve' ? 'အတည်ပြုမည်' : 'ပယ်ဖျက်မည်',
+            text: `ပမာဏ ${amount.toLocaleString()} K အတွက် သေချာပါသလား?`,
+            icon: 'question',
+            showCancelButton: true,
+            background: '#001e36', color: '#fff',
+            confirmButtonColor: action === 'approve' ? '#52c41a' : '#ff4d4f',
+            cancelButtonColor: '#444'
+        });
+
+        if(!confirmResult.isConfirmed) return;
+        loader.style.display = 'flex';
+
+        try {
+            if (action === 'approve') {
+                if (type === 'deposit') { await updateDoc(doc(db, "users", uid), { balance: increment(amount) }); }
+                await updateDoc(doc(db, "transactions", id), { status: 'success' });
+            } else {
+                if (type === 'withdraw') { await updateDoc(doc(db, "users", uid), { balance: increment(amount) }); }
+                await updateDoc(doc(db, "transactions", id), { status: 'rejected' });
+            }
+            Swal.fire({ icon: 'success', title: 'ဆောင်ရွက်ပြီးပါပြီ', background: '#001e36', color: '#fff', timer: 1500, showConfirmButton: false });
+        } catch (e) { Swal.fire("Error", e.message, "error"); }
+        finally { loader.style.display = 'none'; }
+    };
+
+    loadTransactions();
+</script>
+</body>
+</html>

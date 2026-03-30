@@ -3,179 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Maintenance | Lucky Boss 556</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Lucky Boss 556 - Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        :root {
-            --neon-blue: #00f2fe;
-            --neon-purple: #7000ff;
-            --dark-bg: #00050a;
+        :root { 
+            --bg-dark: #000b18; 
+            --bg-card: rgba(0, 51, 102, 0.5); 
+            --accent-blue: #00a2ff; 
+            --white: #ffffff; 
+            --btn-blue: linear-gradient(135deg, #007bff, #0056b3);
+            --glass: rgba(255, 255, 255, 0.05);
+            --accent: #1890ff; --green: #52c41a; --red: #ff4d4f; --dim: #a6adb4;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Pyidaungsu', sans-serif; }
-
-        body {
-            background-color: var(--dark-bg);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            color: white;
+        
+        body { 
+            background: radial-gradient(circle at top, #001f3f, #000b18);
+            color: var(--white); 
+            padding-bottom: 90px;
+            min-height: 100vh;
         }
 
-        /* Animated Background Particles */
-        .bg-glow {
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: var(--neon-blue);
-            filter: blur(150px);
-            border-radius: 50%;
-            z-index: -1;
-            opacity: 0.2;
-            animation: move 10s infinite alternate;
+        /* ပြင်ဆင်လိုက်သော Loading Box ပုံစံ */
+        #page-loader { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 11, 24, 0.6); /* အနောက်ကို အထင်းသားမြင်ရအောင် ပတ်ဝန်းကျင်ကို မှိန်ထားခြင်း */
+            backdrop-filter: blur(3px); /* အနောက်ကဟာကို အနည်းငယ် ဝါးပေးခြင်း (ပိုလှအောင်) */
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
         }
-
-        @keyframes move {
-            from { transform: translate(-50%, -50%); }
-            to { transform: translate(50%, 50%); }
-        }
-
-        .container {
+        .loading-box {
+            background: #001f3f;
+            padding: 30px 50px;
+            border-radius: 15px;
+            border: 1px solid var(--accent-blue);
             text-align: center;
-            position: relative;
-            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 162, 255, 0.4);
+        }
+        .spinner { 
+            width: 40px; height: 40px; 
+            border: 3px solid rgba(255,255,255,0.1); 
+            border-top: 3px solid var(--accent-blue); 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Header */
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; background: rgba(0, 11, 24, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(0, 162, 255, 0.2);
+        }
+        .logo { 
+            font-size: 20px; font-weight: 900; 
+            background: linear-gradient(to right, #fff, var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .user-balance { 
+            background: var(--glass); padding: 5px 10px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: right; flex-grow: 1; max-width: fit-content; margin-left: auto;
         }
 
-        /* Hexagon Icon Design */
-        .icon-wrapper {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        .promo-banner { padding: 12px; }
+        .promo-banner img { width: 100%; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); }
+        .marquee-box { background: rgba(0, 162, 255, 0.1); padding: 8px; font-size: 13px; color: #80d4ff; }
 
-        .hex-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 242, 254, 0.1);
-            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-            border: 2px solid var(--neon-blue);
-            animation: pulse 2s infinite;
+        .game-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+        .game-card { 
+            position: relative; background: var(--bg-card); 
+            border-radius: 15px; overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            transition: 0.3s; aspect-ratio: 1.2 / 1;
         }
-
-        .icon-wrapper i {
-            font-size: 50px;
-            color: var(--neon-blue);
-            filter: drop-shadow(0 0 10px var(--neon-blue));
+        .game-card:active { transform: scale(0.96); }
+        .game-card img { width: 100%; height: 100%; object-fit: cover; }
+        .game-title { 
+            position: absolute; bottom: 0; width: 100%; text-align: center; 
+            padding: 10px 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); 
+            font-size: 13px;
         }
-
-        /* Glitch Effect Text */
-        .glitch {
-            font-size: 32px;
-            font-weight: 900;
-            text-transform: uppercase;
-            position: relative;
-            text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
-                        -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
-                        0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
-            animation: glitch 500ms infinite;
-            margin-bottom: 10px;
+        
+        .footer-nav { 
+            position: fixed; bottom: 0; width: 100%; 
+            background: rgba(0, 11, 24, 0.95); backdrop-filter: blur(20px);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 15px 25px 15px; border-top: 1px solid rgba(0, 162, 255, 0.2); z-index: 2000;
         }
-
-        @keyframes glitch {
-            0% { text-shadow: 0.05em 0 0 rgba(255,0,0,.75), -0.05em -0.025em 0 rgba(0,255,0,.75), -0.025em 0.05em 0 rgba(0,0,255,.75); }
-            14% { text-shadow: 0.05em 0 0 rgba(255,0,0,.75), -0.05em -0.025em 0 rgba(0,255,0,.75), -0.025em 0.05em 0 rgba(0,0,255,.75); }
-            15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,.75), 0.025em 0.025em 0 rgba(0,255,0,.75), -0.05em -0.05em 0 rgba(0,0,255,.75); }
-            49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,.75), 0.025em 0.025em 0 rgba(0,255,0,.75), -0.05em -0.05em 0 rgba(0,0,255,.75); }
-            50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,.75), 0.05em 0 0 rgba(0,255,0,.75), 0 -0.05em 0 rgba(0,0,255,.75); }
-            99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,.75), 0.05em 0 0 rgba(0,255,0,.75), 0 -0.05em 0 rgba(0,0,255,.75); }
-            100% { text-shadow: -0.025em 0 0 rgba(255,0,0,.75), -0.025em -0.025em 0 rgba(0,255,0,.75), -0.025em -0.05em 0 rgba(0,0,255,.75); }
-        }
-
-        .desc {
-            color: #80d4ff;
-            font-size: 14px;
-            max-width: 300px;
-            margin: 0 auto 40px;
-            opacity: 0.8;
-            letter-spacing: 0.5px;
-        }
-
-        /* Scanning Line */
-        .scan-line {
-            width: 200px;
-            height: 2px;
-            background: var(--neon-blue);
-            margin: 20px auto;
-            position: relative;
-            box-shadow: 0 0 15px var(--neon-blue);
-            animation: scan 2s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { transform: scaleX(0); opacity: 0; }
-            50% { transform: scaleX(1); opacity: 1; }
-            100% { transform: scaleX(0); opacity: 0; }
-        }
-
-        .btn-contact {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 25px;
-            border: 1px solid var(--neon-blue);
-            color: var(--neon-blue);
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 14px;
-            text-transform: uppercase;
-            transition: 0.3s;
-            background: rgba(0, 242, 254, 0.05);
-        }
-
-        .btn-contact:hover {
-            background: var(--neon-blue);
-            color: black;
-            box-shadow: 0 0 20px var(--neon-blue);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 0.5; }
-        }
+        .nav-link { text-align: center; color: #7094b8; text-decoration: none; font-size: 10px; flex: 1; transition: 0.3s; cursor: pointer; }
+        .nav-link i { font-size: 18px; margin-bottom: 4px; display: block; }
+        .nav-home { position: relative; top: -20px; background: var(--btn-blue); width: 65px; height: 65px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 0 20px rgba(0, 162, 255, 0.5); border: 4px solid var(--bg-dark); color: white !important; transform: scale(1.1); }
+        .active { color: var(--accent-blue); }
     </style>
 </head>
 <body>
-
-    <div class="bg-glow"></div>
-
-    <div class="container">
-        <div class="icon-wrapper">
-            <div class="hex-bg"></div>
-            <i class="fa-solid fa-shield-halved"></i>
-        </div>
-
-        <h1 class="glitch">SYSTEM HOSTING</h1>
-        
-        <p class="desc">ကျွန်ုပ်တို့ဧ။်ဆာဗာကိုစတင် Hosting ပြုလုပ်နေပါပြီ ခေတ္တစောင့်ဆိုင်းပေးပါ</p>
-
-        <div class="scan-line"></div>
-
-        <a href="https://t.me/thitsarshin009" class="btn-contact">
-            <i class="fa-brands fa-telegram"></i> Contact Support
-        </a>
-
-        <div style="margin-top: 50px; font-size: 10px; color: #444; letter-spacing: 3px;">
-            LUCKY BOSS 556
+    <div id="page-loader">
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <p style="color: var(--accent-blue); font-size: 14px;">ခေတ္တစောင့်ပါ...</p>
         </div>
     </div>
 
+    <header>
+        <div class="logo">LB 556</div>
+        <div class="user-balance">
+            <div id="uName" style="font-size: 11px; color: #aaa;">---</div>
+            <div style="font-weight: bold; color: white;"><span id="uBalance">0</span> <i class="fa-solid fa-circle-dollar-to-slot" style="color: var(--accent-blue); margin-left: 5px;"></i></div>
+        </div>
+    </header>
+
+    <div class="promo-banner">
+        <img src="https://image2url.com/r2/default/images/1774708998300-5a4170f6-be15-445a-8c05-22211b98cca4.png">
+    </div>
+
+    <div class="marquee-box"><marquee scrollamount="5">🙏 Lucky Boss 556 မှ ကြိုဆိုပါတယ် ။ ယုံကြည်စိတ်ချစွာ ကစားနိုင်ပါပြီ ⚡</marquee></div>
+
+    <main class="game-grid">
+        <div class="game-card" onclick="window.location.href='th2d.html'">
+            <div class="game-title">MM 2D</div>
+            <img src="https://image2url.com/r2/default/images/1774380406199-ed2c9dd1-2493-4ca8-a353-39736ebf463f.png">
+        </div>
+        <div class="game-card" onclick="window.location.href='th3d.html'">
+            <div class="game-title">MM 3D</div>
+            <img src="https://image2url.com/r2/default/images/1774380477389-3ea3aede-496a-4a3d-82c2-c541fc5706cb.png">
+        </div>
+        <div class="game-card" onclick="window.location.href='wallet.html'">
+            <div class="game-title">ငွေသွင်း/ငွေထုတ်</div>
+            <img src="https://image2url.com/r2/default/images/1774380518128-d6818780-9193-4472-9134-ff0b222d34bb.png">
+        </div>
+        <div class="game-card" onclick="window.location.href='two_history.html'">
+            <div class="game-title">ထိုးကြေးမှတ်တမ်း</div>
+            <img src="https://image2url.com/r2/default/images/1774380562486-392a8802-e03b-4e50-9b1d-021603551437.png">
+        </div>
+    </main>
+
+    <nav class="footer-nav">
+        <a href="wallet.html" class="nav-link"><i class="fa-solid fa-wallet"></i><div>ငွေသွင်း/ထုတ်</div></a>
+        <a href="two_history.html" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i><div>မှတ်တမ်း</div></a>
+        <a href="index.html" class="nav-link nav-home active"><i class="fa-solid fa-house"></i><div>ပင်မ</div></a>
+        <a href="help.html" class="nav-link"><i class="fa-solid fa-circle-question"></i><div>အကူအညီ</div></a>
+        <a href="profile.html" class="nav-link"><i class="fa-solid fa-user-gear"></i><div>အကောင့်</div></a>
+    </nav>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUk-1FHFjhIVDD4foYuKHM7PyT_A1A1vk",
+        authDomain: "twod-aa6c1.firebaseapp.com",
+        projectId: "twod-aa6c1",
+        storageBucket: "twod-aa6c1.appspot.com",
+        messagingSenderId: "674076613631",
+        appId: "1:674076613631:android:b21b4027ebe6f6f169e5ca"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, (user) => {
+        const loader = document.getElementById('page-loader');
+        if (user) {
+            onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('uName').innerText = data.name;
+                    document.getElementById('uBalance').innerText = data.balance.toLocaleString();
+                }
+                // ဒေတာရပြီဆိုမှ loader ကို ပိတ်မည်
+                loader.style.display = 'none';
+            });
+        } else { window.location.href = "auth.html"; }
+    });
+</script>
 </body>
 </html>

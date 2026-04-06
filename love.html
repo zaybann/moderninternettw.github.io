@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Our Love Story - Hidden Envelope</title>
+    <style>
+        :root {
+            --gold: #d4af37;
+            --white: #ffffff;
+            --cream: #fff9e6;
+            --envelope-color: #f8f1e5;
+            --bg-color: #fcfcfc;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            background: var(--bg-color);
+            color: #333;
+            font-family: 'Pyidaungsu', 'Segoe UI', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* --- Intro Screen --- */
+        #intro {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 2000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: 1.5s cubic-bezier(0.65, 0, 0.35, 1);
+        }
+
+        .start-btn {
+            padding: 15px 45px; border: 2px solid var(--gold);
+            background: white; color: var(--gold);
+            font-size: 1.2rem; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+            font-weight: bold;
+        }
+
+        /* --- Header & Counter --- */
+        header {
+            padding-top: 50px;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.2rem; 
+            background: linear-gradient(to right, #d4af37, #f1c40f, #d4af37);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        #counter-box {
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--gold);
+            display: flex; gap: 8px; justify-content: center;
+        }
+
+        .count-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; }
+        .count-number { font-size: 1.1rem; font-weight: bold; color: var(--gold); }
+        .count-label { font-size: 0.55rem; color: #888; text-transform: uppercase; }
+
+        /* --- THE MOMENT CONTAINER --- */
+        .moment-container {
+            padding: 60px 20px 100px 20px; 
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 400px;
+        }
+
+        .envelope-wrapper {
+            width: 85vw; max-width: 320px; height: 220px;
+            perspective: 1500px;
+            cursor: pointer;
+            position: relative;
+            animation: envelopeShake 4s infinite ease-in-out;
+        }
+
+        .envelope-wrapper.open { animation: none; }
+
+        @keyframes envelopeShake {
+            0%, 90%, 100% { transform: rotate(0deg); }
+            92% { transform: rotate(2deg); }
+            94% { transform: rotate(-2deg); }
+            96% { transform: rotate(1deg); }
+            98% { transform: rotate(-1deg); }
+        }
+
+        .envelope {
+            position: relative; width: 100%; height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 1s ease;
+        }
+
+        /* ဓာတ်ပုံ - နှိပ်လိုက်ရင် အောက်ကိုဆင်းသွားမယ် */
+        .photo-frame-on-envelope {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 5px; overflow: hidden;
+            border: 6px solid white; box-sizing: border-box;
+            background: #f0f0f0;
+            z-index: 40;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.5s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .photo-frame-on-envelope img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* စာအိတ်အဖုံး - နှိပ်လိုက်ရင် ပွင့်ပြီး အောက်ကိုဆင်းသွားမယ် */
+        .envelope-flap {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: var(--envelope-color);
+            clip-path: polygon(0 0, 50% 50%, 100% 0);
+            transform-origin: top;
+            transition: transform 0.8s ease, top 1s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        /* စာအိတ်ကိုယ်ထည် - နှိပ်လိုက်ရင် အောက်ကိုဆင်းသွားမယ် */
+        .envelope-body {
+            position: absolute; width: 100%; height: 100%;
+            background-color: var(--envelope-color);
+            border-radius: 5px;
+            z-index: 20;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .heart-seal {
+            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 1.5rem; color: #ff4d4d;
+            z-index: 45;
+            transition: 0.5s;
+        }
+
+        /* အတွင်းစာရွက် - နေရာမှာတင်ပဲ ကျန်ခဲ့မယ် */
+        .letter-content {
+            position: absolute; top: 10px; left: 5%;
+            width: 90%; height: auto;
+            background-color: var(--cream);
+            padding: 20px; box-sizing: border-box;
+            border-radius: 5px;
+            border: 1px dashed var(--gold);
+            text-align: center;
+            opacity: 0;
+            z-index: 10; /* စာအိတ်တွေအောက်မှာ ရှိနေမယ် */
+            transition: opacity 0.8s ease 0.5s;
+        }
+
+        /* --- OPEN STATE - စာအိတ်နဲ့ ဓာတ်ပုံ အောက်ကို လျော့ဆင်းသွားခြင်း --- */
+        .envelope-wrapper.open .photo-frame-on-envelope {
+            transform: translateY(180px); /* အောက်ကို လျော့ဆင်းသွားမယ် */
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .envelope-wrapper.open .envelope-body {
+            transform: translateY(180px); /* စာအိတ်ကိုယ်ထည် အောက်ဆင်းမယ် */
+        }
+
+        .envelope-wrapper.open .envelope-flap {
+            transform: rotateX(180deg);
+            top: 180px; /* အဖုံးပါ အောက်ကို လိုက်ဆင်းမယ် */
+            z-index: 5;
+        }
+
+        .envelope-wrapper.open .heart-seal {
+            opacity: 0;
+            transform: translate(-50%, 150px);
+        }
+
+        .envelope-wrapper.open .letter-content {
+            opacity: 1; /* စာရွက်က မူလနေရာမှာ ပေါ်လာမယ် */
+        }
+
+        /* Decoration */
+        #music-btn { position: fixed; top: 20px; right: 20px; width: 45px; height: 45px; border-radius: 50%; background: white; border: 2px solid var(--gold); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+        #canvas-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6; }
+
+    </style>
+</head>
+<body>
+
+    <div id="canvas-particles"></div>
+
+    <div id="intro">
+        <h2 style="color: var(--gold); letter-spacing: 2px;">♥️ကိုနိုပ်ကြည့်</h2>
+        <button class="start-btn" onclick="startApp()">♥️♥️♥️</button>
+    </div>
+
+    <button id="music-btn" onclick="toggleMusic()">🎵</button>
+    <audio id="bg-audio" loop src="https://mmkgame.work.gd/Chit%20Thu%20Lay.mp3"></audio>
+
+    <header>
+        <h1>4th Anniversary</h1>
+        <div id="counter-box">
+            <div class="count-item"><span class="count-number" id="days">0</span><span class="count-label">Days</span></div>
+            <div class="count-item"><span class="count-number" id="hours">00</span><span class="count-label">Hours</span></div>
+            <div class="count-item"><span class="count-number" id="minutes">00</span><span class="count-label">Mins</span></div>
+            <div class="count-item"><span class="count-number" id="seconds">00</span><span class="count-label">Secs</span></div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--gold); margin-top: 15px; font-weight: bold;">ဓာတ်ပုံလေးကို နှိပ်ကြည့်ပါဦး ▼</p>
+    </header>
+
+    <div class="moment-container">
+        <div class="envelope-wrapper" id="envelope1">
+            <div class="letter-content">
+                <h3>Happy Anniversary!</h3>
+                <p>"မင်းနဲ့စတွေ့ခဲ့တဲ့ အချိန်ကစပြီး ကိုယ့်ဘဝက တကယ့်ကို ပြည့်စုံသွားခဲ့တယ်။ ဒီစာလေးက ကိုယ့်နှလုံးသားရဲ့ နက်ရှိုင်းရာက ထွက်လာတဲ့ စကားလုံးလေးတွေပါ ချစ်လေး ❤️"</p>
+            </div>
+
+            <div class="envelope">
+                <div class="photo-frame-on-envelope">
+                    <img src="https://image2url.com/r2/default/images/1775481806924-0299f1a2-bbb9-4bd0-91a4-56c39234af3f.jpg" alt="Memory">
+                </div>
+                <div class="envelope-flap"></div>
+                <div class="envelope-body"></div>
+                <div class="heart-seal">❤️</div>
+            </div>
+        </div>
+    </div>
+
+    <footer style="padding: 40px 20px; text-align: center; color: var(--gold); opacity: 0.8;">
+        <p style="font-size: 0.8rem; letter-spacing: 2px;">FOREVER & ALWAYS</p>
+    </footer>
+
+    <script>
+        const startDate = new Date("2021-05-24T00:00:00").getTime();
+        function updateCounter() {
+            const now = new Date().getTime();
+            const distance = now - startDate;
+            document.getElementById("days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
+            document.getElementById("hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+            document.getElementById("minutes").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+            document.getElementById("seconds").innerText = Math.floor((distance % (1000 * 60)) / 1000).toString().padStart(2, '0');
+        }
+        setInterval(updateCounter, 1000);
+
+        const audio = document.getElementById('bg-audio');
+        const envelope = document.getElementById('envelope1');
+
+        function startApp() {
+            document.getElementById('intro').style.opacity = '0';
+            setTimeout(() => { document.getElementById('intro').style.display = 'none'; audio.play(); updateCounter(); }, 1000);
+        }
+
+        function toggleMusic() { audio.paused ? audio.play() : audio.pause(); }
+
+        envelope.addEventListener('click', function() {
+            this.classList.toggle('open');
+        });
+
+        // Particles
+        const canvas = document.getElementById('canvas-particles');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function init() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.speedY = Math.random() * 0.8 + 0.2;
+                this.opacity = Math.random() * 0.4;
+            }
+            update() { this.y += this.speedY; if (this.y > canvas.height) this.y = -10; }
+            draw() { ctx.fillStyle = `rgba(212, 175, 55, ${this.opacity})`; ctx.beginPath(); ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2); ctx.fill(); }
+        }
+        function create() { for (let i = 0; i < 40; i++) particles.push(new Particle()); }
+        function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
+        init(); create(); animate();
+        window.addEventListener('resize', init);
+    </script>
+</body>
+</html>

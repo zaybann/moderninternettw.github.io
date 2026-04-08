@@ -3,277 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Our Love Story - Hidden Envelope</title>
+    <title>8 Memories - Magical Night</title>
     <style>
         :root {
+            --primary: #ff4d6d;
             --gold: #d4af37;
-            --white: #ffffff;
-            --cream: #fff9e6;
-            --envelope-color: #f8f1e5;
-            --bg-color: #fcfcfc;
+            --env-bg: #fdf5e6;
+            --env-opened: #e0e0e0;
         }
 
-        body, html {
-            margin: 0; padding: 0;
-            background: var(--bg-color);
-            color: #333;
-            font-family: 'Pyidaungsu', 'Segoe UI', sans-serif;
-            scroll-behavior: smooth;
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: linear-gradient(125deg, #000000, #1a0a2e, #050505, #0d1b2a);
+            background-size: 400% 400%;
+            animation: auroraBG 15s ease infinite;
+            color: #fff;
+            font-family: 'Pyidaungsu', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- Intro Screen --- */
+        @keyframes auroraBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #canvas-stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+
+        .moon {
+            position: fixed; top: 40px; right: 40px;
+            width: 65px; height: 65px;
+            background: #fdf5e6; border-radius: 50%; z-index: 2;
+            box-shadow: 0 0 30px #fdf5e6, 0 0 60px rgba(212, 175, 55, 0.4);
+        }
+
+        .clouds-container { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0.4; }
+        .cloud { position: absolute; background: #fff; border-radius: 50px; animation: moveClouds linear infinite; }
+        .cloud::after { content: ''; position: absolute; background: #fff; border-radius: 50%; width: 50%; height: 130%; top: -60%; left: 25%; }
+        @keyframes moveClouds { from { left: -200px; } to { left: 110%; } }
+
         #intro {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 2000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: 1.5s cubic-bezier(0.65, 0, 0.35, 1);
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 1s ease;
         }
+        .heart-icon { font-size: 70px; filter: drop-shadow(0 0 20px var(--primary)); animation: beat 1.2s infinite; cursor: pointer; }
+        @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-        .start-btn {
-            padding: 15px 45px; border: 2px solid var(--gold);
-            background: white; color: var(--gold);
-            font-size: 1.2rem; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
-            font-weight: bold;
-        }
+        header { text-align: center; padding-top: 25px; position: relative; z-index: 10; }
+        h1 { font-size: 1.5rem; background: linear-gradient(45deg, var(--gold), #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* --- Header & Counter --- */
-        header {
-            padding-top: 50px;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center; text-align: center;
-        }
+        /* --- Scattered Envelopes (နေရာအနှံ့ပြန့်နေစေရန်) --- */
+        .envelope-field { position: relative; flex: 1; width: 100%; z-index: 5; }
 
-        header h1 {
-            font-size: 2.2rem; 
-            background: linear-gradient(to right, #d4af37, #f1c40f, #d4af37);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin: 0;
-        }
-
-        #counter-box {
-            margin-top: 15px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 12px;
-            border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.15);
-            border: 1px solid var(--gold);
-            display: flex; gap: 8px; justify-content: center;
-        }
-
-        .count-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; }
-        .count-number { font-size: 1.1rem; font-weight: bold; color: var(--gold); }
-        .count-label { font-size: 0.55rem; color: #888; text-transform: uppercase; }
-
-        /* --- THE MOMENT CONTAINER --- */
-        .moment-container {
-            padding: 60px 20px 100px 20px; 
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 400px;
-        }
-
-        .envelope-wrapper {
-            width: 85vw; max-width: 320px; height: 220px;
-            perspective: 1500px;
-            cursor: pointer;
-            position: relative;
-            animation: envelopeShake 4s infinite ease-in-out;
-        }
-
-        .envelope-wrapper.open { animation: none; }
-
-        @keyframes envelopeShake {
-            0%, 90%, 100% { transform: rotate(0deg); }
-            92% { transform: rotate(2deg); }
-            94% { transform: rotate(-2deg); }
-            96% { transform: rotate(1deg); }
-            98% { transform: rotate(-1deg); }
+        .env-wrapper {
+            position: absolute; cursor: pointer; transition: 0.4s;
+            animation: float 6s infinite ease-in-out;
         }
 
         .envelope {
-            position: relative; width: 100%; height: 100%;
-            transform-style: preserve-3d;
-            transition: transform 1s ease;
+            width: 65px; height: 42px; background: var(--env-bg); border-radius: 3px;
+            position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .envelope::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            border-left: 32.5px solid transparent; border-right: 32.5px solid transparent;
+            border-top: 22px solid #dcd3c1; z-index: 2; transition: 0.5s; transform-origin: top;
+        }
+        .env-wrapper.opened .envelope { background: var(--env-opened); filter: grayscale(0.5); }
+        .env-wrapper.opened .envelope::before { transform: rotateX(180deg); border-top-color: var(--env-opened); z-index: 1; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-15px) rotate(3deg); }
         }
 
-        /* ဓာတ်ပုံ - နှိပ်လိုက်ရင် အောက်ကိုဆင်းသွားမယ် */
-        .photo-frame-on-envelope {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 5px; overflow: hidden;
-            border: 6px solid white; box-sizing: border-box;
-            background: #f0f0f0;
-            z-index: 40;
-            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease 0.5s;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        /* ကျပန်းနေရာများ (တစ်ခုနဲ့တစ်ခု မထပ်အောင် ခွဲထားသည်) */
+        .e1 { top: 10%; left: 15%; animation-delay: 0s; }
+        .e2 { top: 15%; right: 20%; animation-delay: 1s; }
+        .e3 { top: 40%; left: 45%; animation-delay: 2s; }
+        .e4 { top: 35%; left: 10%; animation-delay: 1.5s; }
+        .e5 { top: 60%; right: 15%; animation-delay: 2.5s; }
+        .e6 { bottom: 20%; left: 18%; animation-delay: 0.5s; }
+        .e7 { bottom: 25%; right: 30%; animation-delay: 3s; }
+        .e8 { top: 65%; left: 12%; animation-delay: 1.2s; }
+
+        footer { text-align: center; padding: 10px; font-size: 0.7rem; color: rgba(255,255,255,0.4); z-index: 10; background: rgba(0,0,0,0.3); }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.93);
+            display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px;
         }
-        .photo-frame-on-envelope img { width: 100%; height: 100%; object-fit: cover; }
+        .modal.active { display: flex; animation: zoomIn 0.3s ease; }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        .modal-content { background: #fff; width: 100%; max-width: 320px; border-radius: 15px; padding: 10px; text-align: center; color: #333; }
+        .modal-content img { width: 100%; height: 320px; object-fit: cover; border-radius: 10px; }
+        .close-btn { background: var(--primary); color: #fff; padding: 8px 25px; border-radius: 50px; cursor: pointer; display: inline-block; margin-top: 10px; font-weight: bold; }
 
-        /* စာအိတ်အဖုံး - နှိပ်လိုက်ရင် ပွင့်ပြီး အောက်ကိုဆင်းသွားမယ် */
-        .envelope-flap {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: var(--envelope-color);
-            clip-path: polygon(0 0, 50% 50%, 100% 0);
-            transform-origin: top;
-            transition: transform 0.8s ease, top 1s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 30;
-            border-top: 1px solid rgba(212, 175, 55, 0.3);
-        }
+        .heart-pop { position: fixed; pointer-events: none; z-index: 10001; font-size: 20px; animation: heart-fly 1s forwards; }
+        @keyframes heart-fly { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); } }
 
-        /* စာအိတ်ကိုယ်ထည် - နှိပ်လိုက်ရင် အောက်ကိုဆင်းသွားမယ် */
-        .envelope-body {
-            position: absolute; width: 100%; height: 100%;
-            background-color: var(--envelope-color);
-            border-radius: 5px;
-            z-index: 20;
-            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .heart-seal {
-            position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 1.5rem; color: #ff4d4d;
-            z-index: 45;
-            transition: 0.5s;
-        }
-
-        /* အတွင်းစာရွက် - နေရာမှာတင်ပဲ ကျန်ခဲ့မယ် */
-        .letter-content {
-            position: absolute; top: 10px; left: 5%;
-            width: 90%; height: auto;
-            background-color: var(--cream);
-            padding: 20px; box-sizing: border-box;
-            border-radius: 5px;
-            border: 1px dashed var(--gold);
-            text-align: center;
-            opacity: 0;
-            z-index: 10; /* စာအိတ်တွေအောက်မှာ ရှိနေမယ် */
-            transition: opacity 0.8s ease 0.5s;
-        }
-
-        /* --- OPEN STATE - စာအိတ်နဲ့ ဓာတ်ပုံ အောက်ကို လျော့ဆင်းသွားခြင်း --- */
-        .envelope-wrapper.open .photo-frame-on-envelope {
-            transform: translateY(180px); /* အောက်ကို လျော့ဆင်းသွားမယ် */
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .envelope-wrapper.open .envelope-body {
-            transform: translateY(180px); /* စာအိတ်ကိုယ်ထည် အောက်ဆင်းမယ် */
-        }
-
-        .envelope-wrapper.open .envelope-flap {
-            transform: rotateX(180deg);
-            top: 180px; /* အဖုံးပါ အောက်ကို လိုက်ဆင်းမယ် */
-            z-index: 5;
-        }
-
-        .envelope-wrapper.open .heart-seal {
-            opacity: 0;
-            transform: translate(-50%, 150px);
-        }
-
-        .envelope-wrapper.open .letter-content {
-            opacity: 1; /* စာရွက်က မူလနေရာမှာ ပေါ်လာမယ် */
-        }
-
-        /* Decoration */
-        #music-btn { position: fixed; top: 20px; right: 20px; width: 45px; height: 45px; border-radius: 50%; background: white; border: 2px solid var(--gold); z-index: 1000; display: flex; justify-content: center; align-items: center; }
-        #canvas-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0.6; }
-
+        #music-btn { position: fixed; bottom: 60px; right: 20px; z-index: 1000; background: var(--primary); width: 40px; height: 40px; border-radius: 50%; border: none; color: white; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="canvas-particles"></div>
+<canvas id="canvas-stars"></canvas>
+<div class="moon"></div>
+<div class="clouds-container" id="clouds-area" style="display:none;">
+    <div class="cloud" style="width:120px; height:40px; top:15%; animation-duration:40s;"></div>
+    <div class="cloud" style="width:150px; height:50px; top:40%; animation-duration:25s; animation-delay:-5s;"></div>
+    <div class="cloud" style="width:100px; height:35px; top:70%; animation-duration:50s;"></div>
+</div>
 
-    <div id="intro">
-        <h2 style="color: var(--gold); letter-spacing: 2px;">♥️ကိုနိုပ်ကြည့်</h2>
-        <button class="start-btn" onclick="startApp()">♥️♥️♥️</button>
+<div id="intro" onclick="start()">
+    <div class="heart-icon">❤️</div>
+    <p style="color: var(--gold); margin-top: 20px; letter-spacing: 5px; font-size: 0.8rem;">TAP TO START</p>
+</div>
+
+<header><h1>"My Favorite Person"</h1></header>
+
+<div class="envelope-field">
+    <div class="env-wrapper e1" id="env1" onclick="openEnvelope(event, 1)"><div class="envelope"></div></div>
+    <div class="env-wrapper e2" id="env2" onclick="openEnvelope(event, 2)"><div class="envelope"></div></div>
+    <div class="env-wrapper e3" id="env3" onclick="openEnvelope(event, 3)"><div class="envelope"></div></div>
+    <div class="env-wrapper e4" id="env4" onclick="openEnvelope(event, 4)"><div class="envelope"></div></div>
+    <div class="env-wrapper e5" id="env5" onclick="openEnvelope(event, 5)"><div class="envelope"></div></div>
+    <div class="env-wrapper e6" id="env6" onclick="openEnvelope(event, 6)"><div class="envelope"></div></div>
+    <div class="env-wrapper e7" id="env7" onclick="openEnvelope(event, 7)"><div class="envelope"></div></div>
+    <div class="env-wrapper e8" id="env8" onclick="openEnvelope(event, 8)"><div class="envelope"></div></div>
+</div>
+
+<footer>© 2026 Crafted with ❤️ by Mg Hein</footer>
+
+<button id="music-btn" onclick="toggleMusic()">🎵</button>
+<audio id="bg-music" loop src="https://mmkgame.work.gd/Chit%20Thu%20Lay.mp3"></audio>
+
+<div class="modal" id="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <img id="m-img" src="" alt="Memory">
+        <p id="m-text" style="padding: 10px; font-size: 0.9rem;"></p>
+        <div class="close-btn" onclick="closeModal()">ပိတ်မည်</div>
     </div>
+</div>
 
-    <button id="music-btn" onclick="toggleMusic()">🎵</button>
-    <audio id="bg-audio" loop src="https://mmkgame.work.gd/Chit%20Thu%20Lay.mp3"></audio>
+<script>
+    const data = {
+        1: { img: "https://image2url.com/r2/default/images/1775638314843-b94f2a1f-c2f8-4b35-9398-66704faf771e.jpg", text: "ကိုယ်တို့ရဲ့ ပထမဆုံး အမှတ်တရလေး..." },
+        2: { img: "https://image2url.com/r2/default/images/1775638390055-3cc7f922-066a-4f22-969e-222692feafe0.jpg", text: "မင်းရဲ့ အပြုံးတွေက ကိုယ့်အတွက် ခွန်အားပဲ။" },
+        3: { img: "https://image2url.com/r2/default/images/1775638431937-8bf3a6d4-e4f3-41cb-950a-5d50ed2c05d2.jpg", text: "အတူတူ လျှောက်ခဲ့တဲ့ လမ်းတိုင်းကို သတိရနေမယ်။" },
+        4: { img: "https://image2url.com/r2/default/images/1775638611072-eb68988c-4207-4677-b04e-62dfd8afc4f8.jpg", text: "အမြဲတမ်း အနားမှာ ရှိပေးလို့ ကျေးဇူးပါ။" },
+        5: { img: "https://image2url.com/r2/default/images/1775638748548-7bf5a27b-493a-4193-96e2-82620aaaf9fc.jpg", text: "ကမ္ဘာပေါ်မှာ မင်းက ကိုယ့်အတွက် အလှဆုံးပဲ။" },
+        6: { img: "https://image2url.com/r2/default/images/1775638801728-b441abcc-4b5e-4bdb-8e0e-6ed07b3c9b10.jpg", text: "အနာဂတ်တိုင်းမှာ မင်းနဲ့အတူ ရှိချင်တယ်။" },
+        7: { img: "https://image2url.com/r2/default/images/1775638861488-f2f0e56a-06f7-4afb-ae18-02cb9f72c478.jpg", text: "ကိုယ့်ဘဝရဲ့ အကောင်းဆုံး ဆုလာဘ်လေး။" },
+        8: { img: "https://image2url.com/r2/default/images/1775638892146-53db92ed-0343-432c-99cf-182a49241a21.jpg", text: "ထာဝရ အတူတူ လက်တွဲသွားကြမယ်နော်။ ❤️" }
+    };
 
-    <header>
-        <h1>4th Anniversary</h1>
-        <div id="counter-box">
-            <div class="count-item"><span class="count-number" id="days">0</span><span class="count-label">Days</span></div>
-            <div class="count-item"><span class="count-number" id="hours">00</span><span class="count-label">Hours</span></div>
-            <div class="count-item"><span class="count-number" id="minutes">00</span><span class="count-label">Mins</span></div>
-            <div class="count-item"><span class="count-number" id="seconds">00</span><span class="count-label">Secs</span></div>
-        </div>
-        <p style="font-size: 0.8rem; color: var(--gold); margin-top: 15px; font-weight: bold;">ဓာတ်ပုံလေးကို နှိပ်ကြည့်ပါဦး ▼</p>
-    </header>
+    function start() {
+        document.getElementById('intro').style.opacity = '0';
+        document.getElementById('bg-music').play();
+        setTimeout(() => {
+            document.getElementById('intro').remove();
+            document.getElementById('clouds-area').style.display = 'block';
+            initStars();
+        }, 1000);
+    }
 
-    <div class="moment-container">
-        <div class="envelope-wrapper" id="envelope1">
-            <div class="letter-content">
-                <h3>Happy Anniversary!</h3>
-                <p>"မင်းနဲ့စတွေ့ခဲ့တဲ့ အချိန်ကစပြီး ကိုယ့်ဘဝက တကယ့်ကို ပြည့်စုံသွားခဲ့တယ်။ ဒီစာလေးက ကိုယ့်နှလုံးသားရဲ့ နက်ရှိုင်းရာက ထွက်လာတဲ့ စကားလုံးလေးတွေပါ ချစ်လေး ❤️"</p>
-            </div>
-
-            <div class="envelope">
-                <div class="photo-frame-on-envelope">
-                    <img src="https://image2url.com/r2/default/images/1775481806924-0299f1a2-bbb9-4bd0-91a4-56c39234af3f.jpg" alt="Memory">
-                </div>
-                <div class="envelope-flap"></div>
-                <div class="envelope-body"></div>
-                <div class="heart-seal">❤️</div>
-            </div>
-        </div>
-    </div>
-
-    <footer style="padding: 40px 20px; text-align: center; color: var(--gold); opacity: 0.8;">
-        <p style="font-size: 0.8rem; letter-spacing: 2px;">FOREVER & ALWAYS</p>
-    </footer>
-
-    <script>
-        const startDate = new Date("2021-05-24T00:00:00").getTime();
-        function updateCounter() {
-            const now = new Date().getTime();
-            const distance = now - startDate;
-            document.getElementById("days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
-            document.getElementById("hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
-            document.getElementById("minutes").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
-            document.getElementById("seconds").innerText = Math.floor((distance % (1000 * 60)) / 1000).toString().padStart(2, '0');
+    function createHeartPop(x, y) {
+        for(let i=0; i<5; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'heart-pop';
+            heart.innerText = '❤️';
+            heart.style.left = x + 'px'; heart.style.top = y + 'px';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
         }
-        setInterval(updateCounter, 1000);
+    }
 
-        const audio = document.getElementById('bg-audio');
-        const envelope = document.getElementById('envelope1');
+    function openEnvelope(e, id) {
+        createHeartPop(e.clientX, e.clientY);
+        setTimeout(() => {
+            document.getElementById('m-img').src = data[id].img;
+            document.getElementById('m-text').innerText = data[id].text;
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('env' + id).classList.add('opened');
+        }, 300);
+    }
 
-        function startApp() {
-            document.getElementById('intro').style.opacity = '0';
-            setTimeout(() => { document.getElementById('intro').style.display = 'none'; audio.play(); updateCounter(); }, 1000);
-        }
+    function closeModal() { document.getElementById('modal').classList.remove('active'); }
+    function toggleMusic() { const audio = document.getElementById('bg-music'); audio.paused ? audio.play() : audio.pause(); }
 
-        function toggleMusic() { audio.paused ? audio.play() : audio.pause(); }
-
-        envelope.addEventListener('click', function() {
-            this.classList.toggle('open');
-        });
-
-        // Particles
-        const canvas = document.getElementById('canvas-particles');
+    function initStars() {
+        const canvas = document.getElementById('canvas-stars');
         const ctx = canvas.getContext('2d');
-        let particles = [];
-        function init() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.speedY = Math.random() * 0.8 + 0.2;
-                this.opacity = Math.random() * 0.4;
-            }
-            update() { this.y += this.speedY; if (this.y > canvas.height) this.y = -10; }
-            draw() { ctx.fillStyle = `rgba(212, 175, 55, ${this.opacity})`; ctx.beginPath(); ctx.arc(this.x, this.y, 1.5, 0, Math.PI * 2); ctx.fill(); }
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let stars = [];
+        for(let i=0; i<100; i++) {
+            stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.5, op: Math.random(), sp: Math.random() * 0.05 });
         }
-        function create() { for (let i = 0; i < 40; i++) particles.push(new Particle()); }
-        function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { p.update(); p.draw(); }); requestAnimationFrame(animate); }
-        init(); create(); animate();
-        window.addEventListener('resize', init);
-    </script>
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(Math.sin(s.op))})`;
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+                s.op += s.sp;
+            });
+            if(Math.random() > 0.99) {
+                let x = Math.random() * canvas.width;
+                ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x+80, 80); ctx.stroke();
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+    }
+</script>
 </body>
 </html>

@@ -28,7 +28,7 @@ def get_live():
         except:
             market_data = {"raw": res_market}
 
-        # ၂။ Results ပိုင်း (Logic အသစ်ဖြင့် ပြင်ဆင်ခြင်း)
+        # ၂။ Results ပိုင်း (12:00 PM ကို ဖယ်ထုတ်ပြီး ချိန်ညှိခြင်း)
         history_list = []
         rows = res_local.split('\n')
         for row in rows:
@@ -36,24 +36,23 @@ def get_live():
             if any(x in row for x in ["AM", "PM"]):
                 t_val = parts[0].strip()
                 
-                # အခြေအနေအလိုက် Data Structure ကို ပြောင်းလဲခြင်း
+                # ၁၂:၀၀ PM ကို လုံးဝကျော်သွားမယ် (Skip line)
+                if t_val == "12:00 PM":
+                    continue
+                
+                # သတ်မှတ်ထားတဲ့ အချိန်တွေအတွက်ပဲ Data ထည့်မယ်
                 item = {"time": t_val}
                 
-                # ၁၂ နာရီ နဲ့ ၄ နာရီခွဲဆိုရင် twod ပဲ ထည့်မယ်
-                if "12:01 PM" in t_val or "4:30 PM" in t_val:
+                # ၁၂:၀၁ PM နဲ့ ၄:၃၀ PM အတွက် twod ပဲပြမယ်
+                if t_val == "12:01 PM" or t_val == "4:30 PM":
                     item["twod"] = parts[1].strip() if len(parts) > 1 else "--"
+                    history_list.append(item)
                 
-                # ၉ နာရီခွဲ နဲ့ ၂ နာရီ ဆိုရင် modern နဲ့ internet ပဲ ထည့်မယ်
-                elif "9:30 AM" in t_val or "2:00 PM" in t_val:
+                # ၉:၃၀ AM နဲ့ ၂:၀၀ PM အတွက် modern နဲ့ internet ပဲပြမယ်
+                elif t_val == "9:30 AM" or t_val == "2:00 PM":
                     item["modern"] = parts[2].strip() if len(parts) > 2 else "--"
                     item["internet"] = parts[3].strip() if len(parts) > 3 else "--"
-                
-                # တခြားအချိန်တွေရှိရင် (ဥပမာ 12:00 PM) အကုန်ပြချင်ရင် ဒီမှာ ထပ်တိုးလို့ရပါတယ်
-                # အခုလောလောဆယ် သင်ပေးထားတဲ့ logic အတိုင်းပဲ စစ်ထားပါတယ်
-                else:
-                    continue # သင်မပြထားတဲ့ 12:00 PM လိုမျိုးကို ဖယ်ထုတ်လိုက်တာပါ
-
-                history_list.append(item)
+                    history_list.append(item)
 
         return jsonify({
             "success": True,
@@ -67,4 +66,4 @@ def get_live():
 
 if __name__ == "__main__":
     app.run()
-
+    

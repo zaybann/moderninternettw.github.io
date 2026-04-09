@@ -24,14 +24,13 @@ def get_live():
         try:
             m_raw = json.loads(res_market)
             # mm2d1 နဲ့ mm2d2 ကို ပေါင်းပြီး twod အသစ်တစ်ခု ဆောက်မယ်
-            # string အနေနဲ့ ပေါင်းမှာမို့လို့ "1" + "0" = "10" ဖြစ်သွားပါမယ်
             combined_twod = str(m_raw.get('mm2d1', '')) + str(m_raw.get('mm2d2', ''))
             
             market_data = {
-                "set": m_raw.get('set'),
-                "val": m_raw.get('val'),
-                "twod": combined_twod if combined_twod else "--", # ပေါင်းထားသော ဂဏန်း
-                "updated": m_raw.get('updated')
+                "set": m_raw.get('set', '--'),
+                "val": m_raw.get('val', '--'), # Value key ကို ပြန်ထည့်ပေးထားပါတယ်
+                "twod": combined_twod if combined_twod else "--",
+                "updated": m_raw.get('updated', '--')
             }
         except:
             market_data = {"raw": res_market}
@@ -53,7 +52,7 @@ def get_live():
         return jsonify({
             "success": True,
             "server_time": time.strftime("%H:%M:%S"),
-            "market": market_data, # ဒီထဲမှာ mm2d1, mm2d2 မပါတော့ဘဲ twod ပဲ ပါပါတော့မယ်
+            "market": market_data, 
             "results": history_list
         })
 
@@ -62,4 +61,4 @@ def get_live():
 
 if __name__ == "__main__":
     app.run()
-
+    

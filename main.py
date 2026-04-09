@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 import requests
-import time
+from datetime import datetime, timedelta
 import json
 
 app = Flask(__name__)
@@ -15,20 +15,20 @@ def get_live():
         res_local = requests.get(LOCAL_URL, headers=headers, timeout=5).text.strip()
         res_market = requests.get(MARKET_URL, headers=headers, timeout=5).text.strip()
         
-        # ၁။ Market Data ပိုင်း
+        # ၁။ Market Data ကို "live" key အဖြစ် ပြင်ဆင်ခြင်း
         try:
             m_raw = json.loads(res_market)
             combined_twod = str(m_raw.get('mm2d1', '')) + str(m_raw.get('mm2d2', ''))
-            market_data = {
+            live_data = {
                 "set": m_raw.get('set', '--'),
                 "val": m_raw.get('val', '--'),
                 "twod": combined_twod if combined_twod else "--",
                 "updated": m_raw.get('updated', '--')
             }
         except:
-            market_data = {"raw": res_market}
+            live_data = {"raw": res_market}
 
-        # ၂။ Results ပိုင်း (12:00 PM ကို ဖယ်ထုတ်ပြီး ချိန်ညှိခြင်း)
+        # ၂။ Results ပိုင်း (Logic အတိုင်း သန့်စင်ခြင်း)
         history_list = []
         rows = res_local.split('\n')
         for row in rows:
@@ -36,29 +36,35 @@ def get_live():
             if any(x in row for x in ["AM", "PM"]):
                 t_val = parts[0].strip()
                 
-                # ၁၂:၀၀ PM ကို လုံးဝကျော်သွားမယ် (Skip line)
                 if t_val == "12:00 PM":
                     continue
                 
-                # သတ်မှတ်ထားတဲ့ အချိန်တွေအတွက်ပဲ Data ထည့်မယ်
-                item = {"time": t_val}
-                
-                # ၁၂:၀၁ PM နဲ့ ၄:၃၀ PM အတွက် twod ပဲပြမယ်
+                # ၁၂:၀၁ PM နဲ့ ၄:၃၀ PM (Time + Twod)
                 if t_val == "12:01 PM" or t_val == "4:30 PM":
-                    item["twod"] = parts[1].strip() if len(parts) > 1 else "--"
-                    history_list.append(item)
+                    history_list.append({
+                        "time": t_val,
+                        "twod": parts[1].strip() if len(parts) > 1 else "--"
+                    })
                 
-                # ၉:၃၀ AM နဲ့ ၂:၀၀ PM အတွက် modern နဲ့ internet ပဲပြမယ်
+                # ၉:၃၀ AM နဲ့ ၂:၀၀ PM (Time + Modern + Internet)
                 elif t_val == "9:30 AM" or t_val == "2:00 PM":
-                    item["modern"] = parts[2].strip() if len(parts) > 2 else "--"
-                    item["internet"] = parts[3].strip() if len(parts) > 3 else "--"
-                    history_list.append(item)
+                    history_list.append({
+                        "time": t_val,
+                        "modern": parts[2].strip() if len(parts) > 2 else "--",
+                        "internet": parts[3].strip() if len(parts) > 3 else "--"
+                    })
 
+        # ၃။ ထိုင်းစံတော်ချိန် (GMT+7) တွက်ချက်ခြင်း
+        # Vercel Server က UTC သုံးတတ်လို့ ၇ နာရီ ပေါင်းပေးရပါမယ်
+        thailand_time = datetime.utcnow() + timedelta(hours=7)
+        formatted_time = thailand_time.strftime("%H:%M:%S")
+
+        # ၄။ JSON Output (သင့် Format အတိုင်း အတိအကျ)
         return jsonify({
-            "success": True,
-            "server_time": time.strftime("%H:%M:%S"),
-            "market": market_data,
-            "results": history_list
+            "live": live_data,
+            "results": history_list,
+            "server_time": formatted_time,
+            "success": True
         })
 
     except Exception as e:

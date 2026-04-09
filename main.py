@@ -1,9 +1,11 @@
 from flask import Flask, jsonify
+from flask_cors import CORS  # Website ကနေ လှမ်းခေါ်လို့ရအောင် ဒါလေး လိုပါတယ်
 import requests
 from datetime import datetime, timedelta
 import json
 
 app = Flask(__name__)
+CORS(app) # CORS ကို ဖွင့်ပေးလိုက်တာပါ
 
 LOCAL_URL = "https://livechannelmm.com/1883/local-data.txt"
 MARKET_URL = "https://livechannelmm.com/1883/marketdata.txt"
@@ -55,11 +57,10 @@ def get_live():
                     })
 
         # ၃။ ထိုင်းစံတော်ချိန် (GMT+7) တွက်ချက်ခြင်း
-        # Vercel Server က UTC သုံးတတ်လို့ ၇ နာရီ ပေါင်းပေးရပါမယ်
         thailand_time = datetime.utcnow() + timedelta(hours=7)
         formatted_time = thailand_time.strftime("%H:%M:%S")
 
-        # ၄။ JSON Output (သင့် Format အတိုင်း အတိအကျ)
+        # ၄။ JSON Output
         return jsonify({
             "live": live_data,
             "results": history_list,
